@@ -7,7 +7,6 @@ import { errorMiddleware } from './middlewares/error.js';
 
 const app=express();
 
-
 //middleware ko app.use() ke andr likhte hai
 app.use(cors({
     origin: process.env.FRONTEND_URL,
