@@ -1,0 +1,399 @@
+/* =========================
+   PAGE
+========================= */
+
+.signup {
+    min-height: 100vh;
+    width: 100%;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    padding: 35px 20px;
+
+    box-sizing: border-box;
+
+    background:
+        radial-gradient(
+            circle at 12% 90%,
+            rgba(123, 92, 196, 0.07),
+            transparent 20%
+        ),
+        radial-gradient(
+            circle at 88% 10%,
+            rgba(123, 92, 196, 0.06),
+            transparent 20%
+        ),
+        #faf9f6;
+
+    font-family:
+        Inter,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+}
+
+
+/* =========================
+   CONTAINER
+========================= */
+
+.signup-container {
+    width: 100%;
+    max-width: 380px;
+
+    background: #ffffff;
+
+    border: 1px solid #e8e4df;
+    border-radius: 15px;
+
+    padding: 25px 30px 24px;
+
+    box-sizing: border-box;
+
+    box-shadow:
+        0 8px 30px rgba(35, 30, 45, 0.06);
+}
+
+
+/* =========================
+   BRAND
+========================= */
+
+.brand {
+    text-align: center;
+    margin-bottom: 22px;
+}
+
+.brand-icon {
+    width: 32px;
+    height: 32px;
+
+    margin: 0 auto 9px;
+
+    border-radius: 9px;
+
+    background: #7b5cc4;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.logo-mark {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.logo-mark span {
+    width: 10px;
+    height: 4px;
+
+    border-radius: 3px;
+
+    background: #ffffff;
+}
+
+.brand h2 {
+    margin: 0;
+
+    color: #1c1a1f;
+
+    font-size: 16px;
+    font-weight: 650;
+}
+
+.brand p {
+    margin: 4px 0 0;
+
+    color: #99939a;
+
+    font-size: 10px;
+}
+
+
+/* =========================
+   HEADER
+========================= */
+
+.signup-header {
+    margin-bottom: 18px;
+}
+
+.signup-header h1 {
+    margin: 0;
+
+    color: #1b191e;
+
+    font-size: 19px;
+    font-weight: 650;
+}
+
+.signup-header p {
+    margin: 4px 0 0;
+
+    color: #99939a;
+
+    font-size: 10px;
+}
+
+
+/* =========================
+   FORM
+========================= */
+
+.signup-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.form-group label {
+    color: #39353c;
+
+    font-size: 10px;
+    font-weight: 500;
+}
+
+
+/* =========================
+   INPUT
+========================= */
+
+.signup-form input {
+    width: 100%;
+    height: 36px;
+
+    padding: 0 10px;
+
+    box-sizing: border-box;
+
+    border: 1px solid #e2ded9;
+    border-radius: 6px;
+
+    outline: none;
+
+    background: #ffffff;
+
+    color: #29252c;
+
+    font-family: inherit;
+    font-size: 10px;
+
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+.signup-form input::placeholder {
+    color: #aaa5aa;
+}
+
+.signup-form input:focus {
+    border-color: #8a6ac8;
+
+    box-shadow:
+        0 0 0 3px rgba(123, 92, 196, 0.09);
+}
+
+
+/* =========================
+   PASSWORD REQUIREMENTS
+========================= */
+
+.password-requirements {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+
+    margin-top: 1px;
+}
+
+.password-requirements p {
+    margin: 0;
+
+    color: #99939a;
+
+    font-size: 8px;
+}
+
+
+/* =========================
+   CREATE ACCOUNT BUTTON
+========================= */
+
+.signup-form button {
+    width: 100%;
+    height: 36px;
+
+    margin-top: 3px;
+
+    border: none;
+    border-radius: 6px;
+
+    background: #7b5cc4;
+
+    color: #ffffff;
+
+    font-family: inherit;
+    font-size: 10px;
+    font-weight: 600;
+
+    cursor: pointer;
+
+    transition:
+        background 0.2s ease,
+        transform 0.1s ease;
+}
+
+.signup-form button:hover {
+    background: #6d50b3;
+}
+
+.signup-form button:active {
+    transform: translateY(1px);
+}
+
+
+/* =========================
+   OR
+========================= */
+
+.or-divider {
+    display: flex;
+    align-items: center;
+
+    gap: 9px;
+
+    margin: 16px 0;
+}
+
+.or-divider::before,
+.or-divider::after {
+    content: "";
+
+    flex: 1;
+
+    height: 1px;
+
+    background: #eeeae6;
+}
+
+.or-divider span {
+    color: #9b969c;
+
+    font-size: 8px;
+}
+
+
+/* =========================
+   GOOGLE
+========================= */
+
+.google-button {
+    width: 100%;
+    height: 36px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    gap: 7px;
+
+    border: 1px solid #e2ded9;
+    border-radius: 6px;
+
+    background: #ffffff;
+
+    color: #3b373e;
+
+    font-family: inherit;
+    font-size: 10px;
+    font-weight: 500;
+
+    cursor: pointer;
+
+    transition:
+        background 0.2s ease,
+        border-color 0.2s ease;
+}
+
+.google-button:hover {
+    background: #faf9f7;
+    border-color: #d5d0ca;
+}
+
+.google-button span {
+    color: #4285f4;
+
+    font-size: 12px;
+    font-weight: 700;
+}
+
+
+/* =========================
+   SIGN IN
+========================= */
+
+.signin-link {
+    margin: 17px 0 0;
+
+    text-align: center;
+
+    color: #99939a;
+
+    font-size: 9px;
+}
+
+.signin-link a {
+    color: #7654bd;
+
+    font-weight: 500;
+
+    text-decoration: none;
+}
+
+.signin-link a:hover {
+    text-decoration: underline;
+}
+
+
+/* =========================
+   NOTE
+========================= */
+
+.signup-note {
+    margin: 9px 0 0;
+
+    text-align: center;
+
+    color: #aaa5aa;
+
+    font-size: 7px;
+}
+
+
+/* =========================
+   RESPONSIVE
+========================= */
+
+@media (max-width: 500px) {
+
+    .signup {
+        padding: 25px 15px;
+    }
+
+    .signup-container {
+        max-width: 100%;
+        padding: 24px 22px;
+    }
+}

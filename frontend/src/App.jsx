@@ -1,24 +1,30 @@
-import { useState,useEffect } from 'react'
-import { useDispatch } from 'react-redux'
-import { setUser} from './features/auth/authSlice'
 import {BrowserRouter,Routes,Route,Navigate} from 'react-router-dom'
 import { useSelector } from 'react-redux';
 
+import { useState,useEffect } from 'react'
+import { useDispatch } from 'react-redux'
+import { setUser} from './features/auth/authSlice'
 
-import AuthPage from './pages/AuthPage'
+
+
+
+import Login from './pages/Login'
+import Signup from './pages/Signup'
 
 
 
 function App() {
   const dispatch = useDispatch();
  
-  const { user, isAuthenticated } = useSelector((state) => state.auth);
+  const { isAuthenticated } = useSelector((state) => state.auth);
   
   return (
     
     <BrowserRouter>
     <Routes>
-      <Route path="/" element={isAuthenticated ?  <Navigate to="/dashboard"/>  : <AuthPage/>}/>
+      <Route path="/"element={isAuthenticated? <Navigate to="/dashboard" replace />: <Login />}/>
+      <Route path="/login" element={isAuthenticated    ? <Navigate to="/dashboard" replace />: <Login />}/>
+      <Route path="/signup" element={<Signup />} />
       
     </Routes>
     

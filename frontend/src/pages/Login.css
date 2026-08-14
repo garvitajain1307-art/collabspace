@@ -1,0 +1,424 @@
+/* =========================
+   PAGE
+========================= */
+
+.login {
+    min-height: 100vh;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    background:
+        radial-gradient(
+            circle at 8% 12%,
+            rgba(123, 92, 196, 0.13),
+            transparent 22%
+        ),
+        radial-gradient(
+            circle at 90% 85%,
+            rgba(123, 92, 196, 0.12),
+            transparent 23%
+        ),
+        #faf9f6;
+
+    font-family:
+        Inter,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+
+    padding: 30px 20px;
+    box-sizing: border-box;
+}
+
+
+/* =========================
+   LOGIN CARD
+========================= */
+
+.login-container {
+    width: 100%;
+    max-width: 380px;
+
+    background: #ffffff;
+
+    border: 1px solid #e9e6e1;
+    border-radius: 16px;
+
+    padding: 28px 30px 26px;
+
+    box-sizing: border-box;
+
+    box-shadow:
+        0 8px 30px rgba(35, 30, 45, 0.06);
+}
+
+
+/* =========================
+   BRAND
+========================= */
+
+.brand {
+    text-align: center;
+}
+
+.brand-icon {
+    width: 32px;
+    height: 32px;
+
+    margin: 0 auto 10px;
+
+    border-radius: 9px;
+
+    background: #7b5cc4;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.logo-mark {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.logo-mark span {
+    width: 10px;
+    height: 4px;
+
+    border-radius: 3px;
+
+    background: #ffffff;
+}
+
+.brand h2 {
+    margin: 0;
+
+    font-size: 16px;
+    font-weight: 650;
+    color: #19171c;
+}
+
+.brand p {
+    margin: 4px 0 0;
+
+    font-size: 11px;
+    color: #8b858e;
+}
+
+
+/* =========================
+   DIVIDER
+========================= */
+
+.divider {
+    width: 100%;
+    height: 1px;
+
+    background: #eeeae6;
+
+    margin: 22px 0;
+}
+
+
+/* =========================
+   LOGIN HEADER
+========================= */
+
+.login-header h1 {
+    margin: 0;
+
+    font-size: 21px;
+    line-height: 1.3;
+
+    font-weight: 650;
+
+    color: #18161b;
+}
+
+.login-header p {
+    margin: 5px 0 20px;
+
+    font-size: 11px;
+
+    color: #8b858e;
+}
+
+
+/* =========================
+   FORM
+========================= */
+
+.login-form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.form-group label {
+    font-size: 11px;
+    font-weight: 500;
+
+    color: #38343c;
+}
+
+
+/* =========================
+   PASSWORD LABEL
+========================= */
+
+.password-label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.password-label a {
+    font-size: 10px;
+
+    color: #7654bd;
+
+    text-decoration: none;
+}
+
+.password-label a:hover {
+    text-decoration: underline;
+}
+
+
+/* =========================
+   INPUTS
+========================= */
+
+.login-form input {
+    width: 100%;
+
+    height: 38px;
+
+    padding: 0 11px;
+
+    box-sizing: border-box;
+
+    border: 1px solid #e3dfda;
+    border-radius: 7px;
+
+    outline: none;
+
+    background: #ffffff;
+
+    font-family: inherit;
+    font-size: 11px;
+
+    color: #242126;
+
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+.login-form input::placeholder {
+    color: #aaa5a9;
+}
+
+.login-form input:focus {
+    border-color: #8a6ac8;
+
+    box-shadow:
+        0 0 0 3px rgba(123, 92, 196, 0.10);
+}
+
+
+/* =========================
+   LOGIN BUTTON
+========================= */
+
+.login-form button {
+    width: 100%;
+    height: 38px;
+
+    margin-top: 2px;
+
+    border: none;
+    border-radius: 7px;
+
+    background: #7b5cc4;
+
+    color: white;
+
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 600;
+
+    cursor: pointer;
+
+    transition:
+        background 0.2s ease,
+        transform 0.1s ease;
+}
+
+.login-form button:hover {
+    background: #6d50b3;
+}
+
+.login-form button:active {
+    transform: translateY(1px);
+}
+
+
+/* =========================
+   OR DIVIDER
+========================= */
+
+.or-divider {
+    display: flex;
+    align-items: center;
+
+    gap: 10px;
+
+    margin: 18px 0;
+}
+
+.or-divider::before,
+.or-divider::after {
+    content: "";
+
+    flex: 1;
+
+    height: 1px;
+
+    background: #eeeae6;
+}
+
+.or-divider span {
+    font-size: 9px;
+
+    color: #99939a;
+}
+
+
+/* =========================
+   GOOGLE BUTTON
+========================= */
+
+.google-button {
+    width: 100%;
+    height: 38px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    gap: 8px;
+
+    border: 1px solid #e3dfda;
+    border-radius: 7px;
+
+    background: #ffffff;
+
+    color: #39343c;
+
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 500;
+
+    cursor: pointer;
+
+    transition:
+        background 0.2s ease,
+        border-color 0.2s ease;
+}
+
+.google-button:hover {
+    background: #faf9f7;
+    border-color: #d7d2cc;
+}
+
+.google-button span {
+    font-size: 13px;
+    font-weight: 700;
+    color: #4285f4;
+}
+
+
+/* =========================
+   SIGNUP LINK
+========================= */
+
+.signup-link {
+    margin: 20px 0 0;
+
+    text-align: center;
+
+    font-size: 10px;
+
+    color: #8b858e;
+}
+
+.signup-link a {
+    color: #7654bd;
+
+    font-weight: 500;
+
+    text-decoration: none;
+}
+
+.signup-link a:hover {
+    text-decoration: underline;
+}
+
+
+/* =========================
+   ERROR
+========================= */
+
+.auth-error {
+    margin: 0 0 15px;
+
+    padding: 9px 10px;
+
+    border-radius: 7px;
+
+    background: #fff2f2;
+
+    color: #c33d3d;
+
+    font-size: 10px;
+
+    border: 1px solid #f2d4d4;
+}
+
+.auth-error {
+    margin: 10px 0;
+    padding: 8px 10px;
+    border-radius: 6px;
+    background: #fff1f1;
+    color: #c0392b;
+    font-size: 11px;
+}
+
+
+/* =========================
+   RESPONSIVE
+========================= */
+
+@media (max-width: 500px) {
+
+    .login {
+        padding: 20px 15px;
+    }
+
+    .login-container {
+        max-width: 100%;
+
+        padding: 25px 22px;
+    }
+}
