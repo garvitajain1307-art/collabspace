@@ -16,7 +16,31 @@ import Signup from './pages/Signup'
 function App() {
   const dispatch = useDispatch();
  
-  const { isAuthenticated } = useSelector((state) => state.auth);
+  const { user, isAuthenticated } = useSelector((state) => state.auth);
+
+   useEffect(() => {
+        
+        const getMe = async () => {
+            try {
+                const res = await fetch(
+                    `${import.meta.env.VITE_BACKEND_URL}/api/v1/user/getMe`,
+                    {
+                        credentials: "include",
+                    }
+                );
+
+                const data = await res.json();
+
+                if (data.success) {
+                    dispatch(setUser(data.user));
+                }
+            } catch (error) {
+                console.log(error);
+            }
+        };
+
+        getMe();
+    }, []);
   
   return (
     
