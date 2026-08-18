@@ -15,7 +15,12 @@ export const createWorkspace =asyncHandler(async(req,res,next)=>{
     }
     const {name,description}=req.body;
 
-    const workspace=await Workspace.create({name,description,owner:user._id,members:[user._id]});
+    const workspace=await Workspace.create({name,description,owner:user._id,members: [
+        {
+            user: user._id,
+            role: "owner"
+        }
+    ]});
 
     if(!workspace){
         return next(new ErrorHandler("Unable to create workspace",400));
@@ -40,7 +45,7 @@ export const getMyWorkspaces=asyncHandler(async(req,res,next)=>{
         return next(new ErrorHandler("User not found",404));
     }
 
-    const workspaces=await Workspace.find({members:user._id});
+    const workspaces=await Workspace.find({ "members.user": user._id});
 
     res.status(200).json({
         success:true,
@@ -60,7 +65,7 @@ export const getWorkspace=asyncHandler(async(req,res,next)=>{
         return next(new ErrorHandler("Workspace Id is required",400));
     }
 
-    const workspace=await Workspace.findById({_id:workspaceId,members:user._id});
+    const workspace = await Workspace.findOne({ _id: workspaceId,"members.user": user._id});
     if(!workspace){
         return next(new ErrorHandler("Workspace not found",404));
     }
@@ -142,20 +147,93 @@ export const deleteWorkspace=asyncHandler(async(req,res,next)=>{
     
 })
 
-// export const removeMemberFromWorkspace=asyncHandler(async(req,res,next)=>{
-//     const user=req.user;
-//     if(!user){
-//         return next(new ErrorHandler("User not found",404));
-//     }
+export const removeMemberFromWorkspace=asyncHandler(async(req,res,next)=>{
+    const user=req.user;
+    if(!user){
+        return next(new ErrorHandler("User not found",404));
+    }
 
-//     const {workspaceId}=req.params.workspaceId;
-//     const workspace=Workspace.findOne({_id:workspaceId,owner:user._id});
+    const {workspaceId,memberId}=req.params;
+    if(!workspaceId || !memberId){
+        return next(new ErrorHandler("Workspace and memberId are required",400))
+    }
+    const workspace=await Workspace.findOne({_id:workspaceId,owner:user._id});
 
-//     if(!workspace){
-//         return next(new ErrorHandler("Workspace not found",404));
-//     }
+    if(!workspace){
+        return next(new ErrorHandler("Workspace not found or you are not the owner",404));
+    }
 
-//     const memberId=req.params.memberId;
+    if(workspace.owner.toString()===memberId){
+        return next(new ErrorHandler("Owner cannot be removed from the workspace",400));
+    }
+
+    const member=await User.findOne({_id:memberId,workspaces:workspaceId});
+
+    if(!member){
+        return next(new ErrorHandler("Member not found",404));
+    }
+
+    workspace.members = workspace.members.filter(
+        member => member.user.toString() !== memberId
+    );
+    await workspace.save();
+
+    await User.findByIdAndUpdate(memberId, {
+        $pull: {
+            workspaces: workspaceId
+        }
+    });
+
+    res.status(200).json({
+        success: true,
+        message: "Member removed successfully"
+    });
 
     
-// })
+})
+
+export const leaveWorkspace=asyncHandler(async(req,res,next)=>{
+    const user=req.user;
+    if(!user){
+        return next(new ErrorHandler("User not found",404));
+    }
+
+    const {workspaceId}=req.params;
+    if(!workspaceId ){
+        return next(new ErrorHandler("WorkspaceId is required",400))
+    }
+    const workspace=await Workspace.findById(workspaceId);
+
+    if(!workspace){
+        return next(new ErrorHandler("Workspace not found or you are not the owner",404));
+    }
+
+    if(workspace.owner.toString()===user._id.toString()){
+        return next(new ErrorHandler("Owner cannot leave the workspace",400));
+    }
+
+    const member=await User.findOne({_id:user._id,workspaces:workspaceId});
+
+    if(!member){
+        return next(new ErrorHandler("You are not a member of this workspace",404));
+    }
+
+    workspace.members = workspace.members.filter(
+        member => member.user.toString() !== user._id.toString()
+    );
+    
+    await workspace.save();
+
+    await User.findByIdAndUpdate(user._id, {
+        $pull: {
+            workspaces: workspaceId
+        }
+    });
+
+    res.status(200).json({
+        success: true,
+        message: "You left the workspace successfully"
+    });
+
+    
+})
