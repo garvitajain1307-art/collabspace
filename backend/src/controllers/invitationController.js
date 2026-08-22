@@ -21,6 +21,12 @@ export const createInvitation=asyncHandler(async(req,res,next)=>{
         return next(new ErrorHandler("WorkspaceId and email are required",400));
     }
 
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!emailRegex.test(email)) {
+        return next(new ErrorHandler("Please provide a valid email", 400));
+    }
+
     const workspace=await Workspace.findOne({_id:workspaceId,owner:user._id});
     if(!workspace){
         return next(new ErrorHandler("Either workspace doesn't exist or you are not the owner",404));
@@ -223,4 +229,34 @@ export const cancelInvitation=asyncHandler(async(req,res,next)=>{
 
 
 })
+
+export const getWorkspaceInvitations=asyncHandler(async(req,res,next)=>{
+    const user=req.user;
+
+    if(!user){
+        return next(new ErrorHandler("User not found",404));
+    }
+
+    const {workspaceId}=req.params;
+
+    if(!workspaceId){
+        return next(new ErrorHandler("WorkspaceId is required",400));
+    }
+
+    const workspace= await Workspace.findOne({_id:workspaceId,owner:user._id});
+
+    if(!workspace){
+        return next(new ErrorHandler("Either workspace doesn't exist or you are not the owner",404));
+    }
+
+    const invitations=await WorkspaceInvitation.find({workspace:workspaceId,invitedBy:user._id});
+
+    res.status(200).json({
+        success:true,
+        message:"invitations of this workspace fetched successfully",
+        invitations
+    })
+})
+
+
 

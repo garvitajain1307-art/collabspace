@@ -4,6 +4,7 @@ import {config} from "dotenv";
 
 import authRouter from './routes/userRoutes.js';
 import workspaceRouter from './routes/workspaceRoutes.js'
+import invitationRouter from './routes/invitationRoutes.js'
 
 import cookieParser from "cookie-parser";
 import { errorMiddleware } from './middlewares/error.js';
@@ -26,6 +27,8 @@ app.use(express.urlencoded({extended:true}));
 
 app.use("/api/v1/user",authRouter);
 app.use("/api/v1/workspace",workspaceRouter);
+app.use("/api/v1/invitation",invitationRouter);
+
 
 
 
