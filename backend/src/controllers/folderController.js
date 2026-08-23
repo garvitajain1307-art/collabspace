@@ -41,6 +41,16 @@ export const createFolder=asyncHandler(async(req,res,next)=>{
         }
     }
 
+    const existingFolder = await Folder.findOne({
+        workspace: workspaceId,
+        parentFolder: parentFolder || null,
+        name: name.trim()
+    });
+
+    if (existingFolder) {
+        return next(new ErrorHandler("A folder with this name already exists here",400))
+    }
+
     const folder=await Folder.create({name,workspace:workspaceId,parentFolder:parentFolder||null,createdBy:user._id});
 
     if(!folder){
@@ -93,19 +103,19 @@ export const getFolder=asyncHandler(async(req,res,next)=>{
         return next(new ErrorHandler("User not found",404));
     }
 
-    const {workspaceId,folderId}=req.params;
+    const {folderId}=req.params;
 
-    if(!workspaceId || !folderId){
-        return next(new ErrorHandler("WorkspaceId and folderId are required",400));
+    if( !folderId){
+        return next(new ErrorHandler("folderId is required",400));
     }
 
-    const workspace=await Workspace.findOne({_id:workspaceId,"members.user":user._id})
+    const workspace=await Workspace.findOne({_id: folder.workspace,"members.user":user._id})
 
     if(!workspace){
         return next(new ErrorHandler("Workspace doesnt exist or you are not the member",404));
     }
 
-    const folder=await Folder.findOne({_id:folderId,workspace:workspaceId});
+    const folder=await Folder.findById(folderId);
 
     if (!folder) {
         return next(new ErrorHandler("Folder not found", 404));
@@ -117,6 +127,123 @@ export const getFolder=asyncHandler(async(req,res,next)=>{
         folder
     })
 })
+
+export const updateFolder=asyncHandler(async(req,res,next)=>{
+    const user=req.user;
+    if(!user){
+        return next(new ErrorHandler("user not found",404));
+    }
+
+    const {folderId}=req.params;
+     const { name, parentFolder } = req.body;
+
+    if(!folderId){
+        return next(new ErrorHandler("FolderId is required"));
+    }
+
+    const folder=await Folder.findById(folderId);
+
+
+    if(!folder){
+        return next(new ErrorHandler("Folder not found",404));
+    }
+
+    const workspace=await Workspace.findOne({_id:folder.workspace,"members.user":user._id});
+    if (!workspace) {
+        return next(new ErrorHandler("Workspace doesn't exist or you are not a member",404));
+    }
+
+    const newName = name !== undefined ? name.trim() : folder.name;
+    const newParentFolder =parentFolder !== undefined ? (parentFolder || null): folder.parentFolder;
+    if (!newName) {
+        return next(
+            new ErrorHandler("Folder name cannot be empty", 400)
+        );
+    }
+
+    if (newParentFolder && newParentFolder.toString() === folderId) {
+        return next(new ErrorHandler("A folder cannot be its own parent",400));
+    }
+
+    if (newParentFolder) {
+        const parent = await Folder.findOne({_id: newParentFolder,workspace: folder.workspace});
+        if (!parent) {
+            return next(new ErrorHandler("Parent folder not found",404));
+        }
+    }
+
+    const existingFolder = await Folder.findOne({
+        workspace: folder.workspace,
+        parentFolder: newParentFolder,
+        name: newName,
+        _id: { $ne: folderId }
+    });
+
+    if (existingFolder) {
+        return next(new ErrorHandler("A folder with this name already exists here",400));
+    }
+
+    folder.name = newName;
+    folder.parentFolder = newParentFolder;
+
+    await folder.save();
+
+    res.status(200).json({
+        success: true,
+        message: "Folder updated successfully",
+        folder
+    });
+})
+
+export const deleteFolder=asyncHandler(async(req,res,next)=>{
+    const user=req.user;
+    if(!user){
+        return next(new ErrorHandler("User not found",404));
+    }
+
+    const {folderId}=req.params;
+    if(!folderId){
+        return next(new ErrorHandler("FolderId is required",400))
+    }
+    const folder=await Folder.findById(folderId);
+    if(!folder){
+        return next(new ErrorHandler("Folder not found",404));
+    }
+    
+    const workspace=await Workspace.findOne({_id:folder.workspace,"members.user":user._id});
+
+    if(!workspace){
+        return next(new ErrorHandler("Workspace doesn't exist or you are not the member",404));
+    }
+
+    const deleteChildren=async(parentId)=>{
+        const children=await Folder.find({parentFolder:parentId});
+
+        for(const child of children){
+            await deleteChildren(child._id)
+
+            await Folder.findByIdAndDelete(child._id)
+        }
+    }
+
+    await deleteChildren(folderId);
+
+    await Folder.findByIdAndDelete(folderId);
+
+     const remainingFolders = await Folder.find({
+        workspace: folder.workspace
+    });
+
+    workspace.folders = remainingFolders.map(folder => folder._id);
+
+    await workspace.save();
+
+    res.status(200).json({
+        success: true,
+        message: "Folder and all its child folders deleted successfully"
+    });
+})
+
 
 
 
