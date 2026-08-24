@@ -3,7 +3,8 @@ import User from "../models/user.js";
 import Workspace from "../models/workspace.js";
 import WorkspaceInvitation from "../models/workspaceInvitation.js"
 import Document from "../models/document.js";
-import Folder from "../models/folder.js"
+import Folder from "../models/folder.js";
+import { asyncHandler } from "../middlewares/asyncHandler.js";
 
 import mongoose from "mongoose";
 import crypto from "crypto";

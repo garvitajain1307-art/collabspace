@@ -3,6 +3,7 @@ import User from "../models/user.js";
 import Workspace from "../models/workspace.js";
 import WorkspaceInvitation from "../models/workspaceInvitation.js"
 import Folder from "../models/folder.js"
+import Document from "../models/document.js";
 
 import mongoose from "mongoose";
 import crypto from "crypto";
@@ -96,37 +97,57 @@ export const getWorkspaceFolders=asyncHandler(async(req,res,next)=>{
     })
 })
 
-export const getFolder=asyncHandler(async(req,res,next)=>{
-    const user=req.user;
+export const getFolder = asyncHandler(async (req, res, next) => {
+    const user = req.user;
 
-    if(!user){
-        return next(new ErrorHandler("User not found",404));
+    if (!user) {
+        return next(new ErrorHandler("User not found", 404));
     }
 
-    const {folderId}=req.params;
+    const { folderId } = req.params;
 
-    if( !folderId){
-        return next(new ErrorHandler("folderId is required",400));
+    if (!folderId) {
+        return next(new ErrorHandler("FolderId is required", 400));
     }
 
-    const workspace=await Workspace.findOne({_id: folder.workspace,"members.user":user._id})
-
-    if(!workspace){
-        return next(new ErrorHandler("Workspace doesnt exist or you are not the member",404));
-    }
-
-    const folder=await Folder.findById(folderId);
+    const folder = await Folder.findById(folderId);
 
     if (!folder) {
         return next(new ErrorHandler("Folder not found", 404));
     }
 
+    const workspace = await Workspace.findOne({
+        _id: folder.workspace,
+        "members.user": user._id
+    });
+
+    if (!workspace) {
+        return next(
+            new ErrorHandler(
+                "Workspace doesn't exist or you are not a member",
+                404
+            )
+        );
+    }
+
+    const children = await Folder.find({
+        workspace: folder.workspace,
+        parentFolder: folderId
+    });
+
+    const documents = await Document.find({
+        workspace: folder.workspace,
+        folder: folderId
+    });
+
     res.status(200).json({
-        success:true,
-        message:"Folder fetched sucessfully",
-        folder
-    })
-})
+        success: true,
+        message: "Folder fetched successfully",
+        folder,
+        children,
+        documents
+    });
+});
 
 export const updateFolder=asyncHandler(async(req,res,next)=>{
     const user=req.user;
@@ -195,54 +216,106 @@ export const updateFolder=asyncHandler(async(req,res,next)=>{
     });
 })
 
-export const deleteFolder=asyncHandler(async(req,res,next)=>{
-    const user=req.user;
-    if(!user){
-        return next(new ErrorHandler("User not found",404));
+export const deleteFolder = asyncHandler(async (req, res, next) => {
+    const user = req.user;
+
+    if (!user) {
+        return next(new ErrorHandler("User not found", 404));
     }
 
-    const {folderId}=req.params;
-    if(!folderId){
-        return next(new ErrorHandler("FolderId is required",400))
-    }
-    const folder=await Folder.findById(folderId);
-    if(!folder){
-        return next(new ErrorHandler("Folder not found",404));
-    }
-    
-    const workspace=await Workspace.findOne({_id:folder.workspace,"members.user":user._id});
+    const { folderId } = req.params;
 
-    if(!workspace){
-        return next(new ErrorHandler("Workspace doesn't exist or you are not the member",404));
+    if (!folderId) {
+        return next(new ErrorHandler("FolderId is required", 400));
     }
 
-    const deleteChildren=async(parentId)=>{
-        const children=await Folder.find({parentFolder:parentId});
+    const folder = await Folder.findById(folderId);
 
-        for(const child of children){
-            await deleteChildren(child._id)
-
-            await Folder.findByIdAndDelete(child._id)
-        }
+    if (!folder) {
+        return next(new ErrorHandler("Folder not found", 404));
     }
 
-    await deleteChildren(folderId);
-
-    await Folder.findByIdAndDelete(folderId);
-
-     const remainingFolders = await Folder.find({
-        workspace: folder.workspace
+    const workspace = await Workspace.findOne({
+        _id: folder.workspace,
+        "members.user": user._id
     });
 
-    workspace.folders = remainingFolders.map(folder => folder._id);
+    if (!workspace) {
+        return next(
+            new ErrorHandler(
+                "Workspace doesn't exist or you are not a member",
+                404
+            )
+        );
+    }
+
+    // Store all folders that need to be deleted
+    const folderIds = [];
+
+    const getChildren = async (parentId) => {
+        const children = await Folder.find({
+            parentFolder: parentId
+        });
+
+        for (const child of children) {
+            await getChildren(child._id);
+
+            folderIds.push(child._id);
+        }
+    };
+
+    // Find all child folders
+    await getChildren(folderId);
+
+    // Add the main folder
+    folderIds.push(folderId);
+
+    // Find all documents inside these folders
+    const documents = await Document.find({
+        folder: { $in: folderIds }
+    });
+
+    const documentIds = documents.map(document => document._id);
+
+    // Delete all documents
+    if (documentIds.length > 0) {
+        await Document.deleteMany({
+            _id: { $in: documentIds }
+        });
+
+        // Remove documents from owners' ownedDocuments
+        await User.updateMany(
+            {
+                ownedDocuments: { $in: documentIds }
+            },
+            {
+                $pull: {
+                    ownedDocuments: {
+                        $in: documentIds
+                    }
+                }
+            }
+        );
+
+        // Remove documents from workspace
+        workspace.documents.pull(...documentIds);
+    }
+
+    // Delete all folders
+    await Folder.deleteMany({
+        _id: { $in: folderIds }
+    });
+
+    // Remove folders from workspace
+    workspace.folders.pull(...folderIds);
 
     await workspace.save();
 
     res.status(200).json({
         success: true,
-        message: "Folder and all its child folders deleted successfully"
+        message: "Folder, child folders and documents deleted successfully"
     });
-})
+});
 
 
 
