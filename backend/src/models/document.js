@@ -50,7 +50,7 @@ const documentSchema = new mongoose.Schema(
 
         permission: {
           type: String,
-          enum: ["read", "write"],
+          enum: ["editor", "viewer"],
           default: "read",
         },
 
@@ -66,6 +66,7 @@ const documentSchema = new mongoose.Schema(
       ref: "Version",
       default: null,
     },
+    
   },
   {
     timestamps: true,

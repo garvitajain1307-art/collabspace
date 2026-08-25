@@ -1,5 +1,5 @@
 import express from "express";
-import {createDocument,getWorkspaceDocuments,getDocument,updateDocument,deleteDocument} from "../controllers/documentController.js"
+import {createDocument,getWorkspaceDocuments,getDocument,updateDocument,deleteDocument,addCollaborator,getCollaborators} from "../controllers/documentController.js"
 import { isAuthenticated } from "../middlewares/authMiddleware.js";
 
 const router=express.Router();
@@ -10,5 +10,7 @@ router.get("/getWorkspaceDocuments/:workspaceId",isAuthenticated,getWorkspaceDoc
 router.get("/getDocument/:documentId",isAuthenticated,getDocument);
 router.put("/updateDocument/:documentId",isAuthenticated,updateDocument);
 router.delete("/deleteDocument/:documentId",isAuthenticated,deleteDocument);
+router.post("/addCollaborator/:documentId",isAuthenticated,addCollaborator);
+router.get("/getCollaborators/documentId",isAuthenticated,getCollaborators)
 
 export default router;
