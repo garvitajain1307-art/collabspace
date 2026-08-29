@@ -9,6 +9,7 @@ import mongoose from "mongoose";
 import crypto from "crypto";
 
 import { asyncHandler } from "../middlewares/asyncHandler.js";
+import { getDocumentAccess } from "../utils/documentAccess.js";
 
 export const createFolder=asyncHandler(async(req,res,next)=>{
     const user=req.user;
@@ -130,7 +131,7 @@ export const getFolder = asyncHandler(async (req, res, next) => {
         );
     }
 
-    const children = await Folder.find({
+    const childFolders = await Folder.find({
         workspace: folder.workspace,
         parentFolder: folderId
     });
@@ -139,6 +140,16 @@ export const getFolder = asyncHandler(async (req, res, next) => {
         workspace: folder.workspace,
         folder: folderId
     });
+
+    const documentswithAccess=documents.map(document=>{
+        const access=getDocumentAccess(user,document,workspace);
+        return {
+            ...document.toObject(),
+            access
+        };
+
+        
+    })
 
     res.status(200).json({
         success: true,

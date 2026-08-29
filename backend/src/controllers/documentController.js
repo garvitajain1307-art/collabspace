@@ -5,6 +5,7 @@ import WorkspaceInvitation from "../models/workspaceInvitation.js"
 import Document from "../models/document.js";
 import Folder from "../models/folder.js";
 import { asyncHandler } from "../middlewares/asyncHandler.js";
+import { getDocumentAccess } from "../utils/documentAccess.js";
 
 import mongoose from "mongoose";
 import crypto from "crypto";
@@ -82,12 +83,21 @@ export const getWorkspaceDocuments=asyncHandler(async(req,res,next)=>{
         return next(new ErrorHandler("workspace not found or you are not a member",404));
     }
 
-    const documents=await Document.find({workspace:workspaceId});
+    const documents = await Document.find({ workspace: workspaceId});
+
+    const documentsWithAccess=documents.map(document=>{
+        const access=getDocumentAccess(user,document,workspace);
+
+        return{
+            ...document.toObject(),
+            access
+        };
+    })
 
     res.status(200).json({
         success:true,
         message:"documents for this workspace fetched successfully",
-        documents
+        documents:documentsWithAccess
     })
 })
 
@@ -114,6 +124,11 @@ export const getDocument=asyncHandler(async(req,res,next)=>{
     const workspace=await Workspace.findOne({_id:document.workspace,"members.user":user._id});
     if(!workspace){
         return next(new ErrorHandler("workspace not found or you are not a member",404));
+    }
+
+     const access = getDocumentAccess(user,document,workspace);
+     if (access === "none") {
+        return next(new ErrorHandler("You don't have access to this document",403));
     }
 
     res.status(200).json({
@@ -148,6 +163,14 @@ export const updateDocument=asyncHandler(async(req,res,next)=>{
     if(!workspace){
         return next(new ErrorHandler("workspace not found or you are not the member",404));
     }
+
+    const access=getDocumentAccess(user,document,workspace);
+
+    if(access!=="owner" && access!=="editor"){
+        return next(new ErrorHandler("You don't have permission to edit this document",403));
+    }
+
+
 
     if(title!==undefined){
         if(!title.trim()){
@@ -209,9 +232,16 @@ export const deleteDocument=asyncHandler(async(req,res,next)=>{
         return next(new ErrorHandler("Workspace not found or you are not the member",404));
     }
 
-    await Document.findByIdAndDelete(documentId);
+    // if(document.owner.toString()!==user._id.toString()){
+    //     return next(new ErrorHandler("Only owner can delete this document",403));
+    // }
 
-   
+    const access=getDocumentAccess(user,document,workspace);
+
+    if(access!=="owner"){
+        return next(new ErrorHandler("You don't have permission to delete this document",403));
+    }
+
     workspace.documents.pull(documentId);
     await workspace.save();
 
@@ -221,6 +251,8 @@ export const deleteDocument=asyncHandler(async(req,res,next)=>{
             ownedDocuments: documentId
         }
     });
+
+    await Document.findByIdAndDelete(documentId);
 
     res.status(200).json({
         success: true,
@@ -252,10 +284,19 @@ export const addCollaborator=asyncHandler(async(req,res,next)=>{
         return next(new ErrorHandler("Document not found",404));
     }
 
+    const workspace=await Workspace.findOne({_id:document.workspace,"members.user":userId});
 
-    if(document.owner.toString()!==user._id.toString()){
-        return next(new ErrorHandler("Only document owner can add collaborators",403));
+    if(!workspace){
+        return next(new ErrorHandler("Collaborator is not a member of this workspace",400));
     }
+
+
+    const access = getDocumentAccess(user, document, workspace);
+
+    if (access !== "owner") {
+        return next(new ErrorHandler( "Only owner can manage document permissions",403)
+    );
+}
 
     const member=await User.findById(userId);
 
@@ -263,11 +304,7 @@ export const addCollaborator=asyncHandler(async(req,res,next)=>{
         return next(new ErrorHandler("Collaborator not found",404))
     }
 
-    const workspace=await Workspace.findOne({_id:document.workspace,"members.user":userId});
-
-    if(!workspace){
-        return next(new ErrorHandler("Collaborator is not a member of this workspace",400));
-    }
+    
 
     if(document.owner.toString()===userId.toString()){
         return next(new ErrorHandler("Document Owner cannot be added as collaborator",400));
@@ -319,10 +356,10 @@ export const getCollaborators=asyncHandler(async(req,res,next)=>{
         return next(new ErrorHandler("Workspace not found or you are not the member",404));
     }
 
-    const hasAccess=document.owner.toString()===user._id.toString()||document.collaborators.some(collaborator=>collaborator.user.toString()===user._id.toString());
-    if(!hasAccess){
-        return next(new ErrorHandler("You don't have access to this resource",403));
+    const access=getDocumentAccess(user,document,workspace);
 
+    if(access==="none"){
+        return next(new ErrorHandler("You don't have access to this resource",403));
     }
 
     const collaborators=await Document.findById(documentId).select("collaborators").populate("collaborators.user","name email");
@@ -363,8 +400,10 @@ export const updateCollaboratorPermission=asyncHandler(async(req,res,next)=>{
         return next(new ErrorHandler("Workspace not found or you are not the member",404));
     }
 
-    if(document.owner.toString()!==user._id.toString()){
-        return next(new ErrorHandler("Only document owner can update permissions",403));
+    const access = getDocumentAccess(user, document, workspace);
+
+    if (access !== "owner") {
+        return next(new ErrorHandler("Only owner can manage document permissions",403));
     }
 
     const collaborator=document.collaborators.find(collaborator=>collaborator.user.toString()===userId.toString());
@@ -410,8 +449,10 @@ export const removeCollaborator=asyncHandler(async(req,res,next)=>{
         return next(new ErrorHandler("Workspace not found or you are not a member",404));
     }
 
-    if(document.owner.toString()!==user._id.toString()){
-        return next(new ErrorHandler("Only document owner can remove collaborators",403));
+    const access = getDocumentAccess(user, document, workspace);
+
+    if (access !== "owner") {
+        return next(new ErrorHandler("Only owner can manage document permissions",403));
     }
 
     if(document.owner.toString()===userId.toString()){
