@@ -1,3 +1,4 @@
+import "./socket";
 import {BrowserRouter,Routes,Route,Navigate} from 'react-router-dom'
 import { useSelector } from 'react-redux';
 
@@ -17,6 +18,8 @@ function App() {
   const dispatch = useDispatch();
  
   const { user, isAuthenticated } = useSelector((state) => state.auth);
+
+ 
 
    useEffect(() => {
         
@@ -49,6 +52,7 @@ function App() {
       <Route path="/"element={isAuthenticated? <Navigate to="/dashboard" replace />: <Login />}/>
       <Route path="/login" element={isAuthenticated    ? <Navigate to="/dashboard" replace />: <Login />}/>
       <Route path="/signup" element={<Signup />} />
+      <Route path="/dashboard" element={<div>Dashboard</div>} />
       
     </Routes>
     

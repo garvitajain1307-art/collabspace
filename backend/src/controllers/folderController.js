@@ -141,7 +141,7 @@ export const getFolder = asyncHandler(async (req, res, next) => {
         folder: folderId
     });
 
-    const documentswithAccess=documents.map(document=>{
+    const documentsWithAccess=documents.map(document=>{
         const access=getDocumentAccess(user,document,workspace);
         return {
             ...document.toObject(),
@@ -155,8 +155,8 @@ export const getFolder = asyncHandler(async (req, res, next) => {
         success: true,
         message: "Folder fetched successfully",
         folder,
-        children,
-        documents
+        childFolders,
+        documents: documentsWithAccess
     });
 });
 
