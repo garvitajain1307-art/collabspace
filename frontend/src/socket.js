@@ -10,22 +10,19 @@ socket.on("connect", () => {
     
     console.log("CONNECTED:", socket.id);
 
-    // socket.emit("joinRoom", "document456");
+    socket.emit("joinDocument", "6a8bea47e04e876cf8ce68d7");
 
-    // socket.emit("sendRoomMessage", {
-    //     roomId: "document456",
-    //     message: `Hello from ${socket.id}`
-    // });
+   
 });
 
 
-// socket.on("roomMessage", (message) => {
-//     console.log("ROOM MESSAGE:", message);
-// });
+socket.on("joinedDocument", (message) => {
+    console.log("JOINED:", message);
+});
 
-// socket.on("receiveRoomMessage", (message) => {
-//     console.log("ROOM MESSAGE RECEIVED:", message);
-// });
+socket.on("joinError", (message) => {
+    console.log("JOIN ERROR:", message);
+});
 
 socket.on("connect_error", (error) => {
     console.log("Socket connection error:", error.message);

@@ -4,7 +4,7 @@ import { useSelector } from 'react-redux';
 
 import { useState,useEffect } from 'react'
 import { useDispatch } from 'react-redux'
-import { setUser} from './features/auth/authSlice'
+import { setUser,logoutUser} from './features/auth/authSlice'
 
 
 
@@ -52,7 +52,7 @@ function App() {
       <Route path="/"element={isAuthenticated? <Navigate to="/dashboard" replace />: <Login />}/>
       <Route path="/login" element={isAuthenticated    ? <Navigate to="/dashboard" replace />: <Login />}/>
       <Route path="/signup" element={<Signup />} />
-      <Route path="/dashboard" element={<div>Dashboard</div>} />
+      <Route path="/dashboard" element={ isAuthenticated ? <div>Dashboard</div>: <Navigate to="/login" replace />}/>
       
     </Routes>
     
