@@ -11,41 +11,62 @@ import { setUser,logoutUser} from './features/auth/authSlice'
 
 import Login from './pages/Login'
 import Signup from './pages/Signup'
+import CollaborationPage from "./pages/CollaborationPage";
 
 
 
 function App() {
   const dispatch = useDispatch();
+  
  
   const { user, isAuthenticated } = useSelector((state) => state.auth);
+  const [authChecked, setAuthChecked] = useState(false);
+  
+//   console.log("CURRENT PATH:", window.location.pathname);
+// console.log("AUTH:", isAuthenticated);
+//   console.log("AUTH:", isAuthenticated);
 
  
 
    useEffect(() => {
-        
-        const getMe = async () => {
-            try {
-                const res = await fetch(
-                    `${import.meta.env.VITE_BACKEND_URL}/api/v1/user/getMe`,
-                    {
-                        credentials: "include",
-                    }
-                );
 
-                const data = await res.json();
+    const getMe = async () => {
+        try {
 
-                if (data.success) {
-                    dispatch(setUser(data.user));
+            const res = await fetch(
+                `${import.meta.env.VITE_BACKEND_URL}/api/v1/user/getMe`,
+                {
+                    credentials: "include",
                 }
-            } catch (error) {
-                console.log(error);
-            }
-        };
+            );
 
-        getMe();
-    }, []);
+            const data = await res.json();
+
+            if (data.success) {
+                dispatch(setUser(data.user));
+            }
+
+        } catch (error) {
+
+            console.log(error);
+
+        } finally {
+
+            setAuthChecked(true);
+
+        }
+    };
+
+    getMe();
+
+}, [dispatch]);
+
+    if (!authChecked) {
+        return <div>Checking authentication...</div>;
+    }
   
   return (
+    
     
     <BrowserRouter>
     <Routes>
@@ -53,7 +74,11 @@ function App() {
       <Route path="/login" element={isAuthenticated    ? <Navigate to="/dashboard" replace />: <Login />}/>
       <Route path="/signup" element={<Signup />} />
       <Route path="/dashboard" element={ isAuthenticated ? <div>Dashboard</div>: <Navigate to="/login" replace />}/>
-      
+      <Route path="/collaboration" element={isAuthenticated? <CollaborationPage />  : <Navigate to="/login" replace />}/>
+      {/* <Route
+    path="/collaboration"
+    element={<CollaborationPage />}
+/> */}
     </Routes>
     
     </BrowserRouter>

@@ -54,8 +54,10 @@ io.use(async (socket, next) => {
   }
 });
 
-//Whenever a client connects to our Socket.IO server, execute this function.
 
+const documentUsers=new Map();
+
+//Whenever a client connects to our Socket.IO server, execute this function.
 io.on("connection", (socket) => {
   //socket represents that particular client's connection.
   console.log("User connected:", socket.id);
@@ -104,7 +106,27 @@ io.on("connection", (socket) => {
       }
 
       socket.join(documentId);
+      socket.documentId=documentId;
+
+      if(!documentUsers.has(documentId)){
+        documentUsers.set(documentId,new Map());
+      }
+
+      documentUsers.get(documentId).set(socket.user._id.toString(),
+        {
+          userId:socket.user._id,
+          name:socket.user.name
+        }
+      );
+
+      socket.emit("onlineUsers", Array.from(documentUsers.get(documentId).values()));
+      
       console.log(`${socket.user._id} joined document room: ${documentId} `);
+      //socket.to => send an event to everyone else in this room but not the current socket.
+      socket.to(documentId).emit("userJoined",{
+        userId:socket.user._id,
+        name:socket.user.name
+      })
       socket.emit(
         "joinedDocument",
         `Successfully joined document ${documentId}`,
@@ -115,8 +137,38 @@ io.on("connection", (socket) => {
     }
   });
 
+  socket.on("cursorMove",(position)=>{
+    socket.to(socket.documentId).emit("cursorMove",{
+        userId:socket.user._id,
+        name:socket.user.name,
+        x:position.x,
+        y:position.y
+    })
+  })
+
   socket.on("disconnect", () => {
     console.log("User disconnected:", socket.id);
+    if(socket.documentId){  //if is needed because a socket can disconnect without joining a document
+      const users=documentUsers.get(socket.documentId);
+      if(users){
+        users.delete(socket.user._id.toString());
+
+        if(users.size===0){
+          documentUsers.delete(socket.documentId);
+        }
+      }
+      socket.to(socket.documentId).emit("userLeft",{
+        userId:socket.user._id,
+        name:socket.user.name
+      })
+
+      socket.to(socket.documentId).emit(
+        "onlineUsers",
+         users ? Array.from(users.values()) : []
+      );
+
+    }
+    
   });
 });
 

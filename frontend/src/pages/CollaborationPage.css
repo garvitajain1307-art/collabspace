@@ -1,0 +1,31 @@
+.collaboration-page {
+    width: 100vw;
+    height: 100vh;
+    position: relative;
+    background: #f5f5f5;
+    overflow: hidden;
+}
+
+.collaboration-page h2 {
+    padding: 20px;
+    margin: 0;
+}
+
+.remote-cursor {
+    position: fixed;
+    pointer-events: none;
+    z-index: 1000;
+}
+
+.cursor-icon {
+    font-size: 20px;
+}
+
+.cursor-name {
+    background: black;
+    color: white;
+    padding: 3px 7px;
+    border-radius: 5px;
+    font-size: 12px;
+    white-space: nowrap;
+}
