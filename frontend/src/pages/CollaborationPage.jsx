@@ -1,6 +1,7 @@
 import { useEffect,useState } from "react";
 import socket from "../socket";
 import "./CollaborationPage.css";
+import CollaborativeEditor from "../components/editor/CollaborativeEditor";
 
 const CollaborationPage = () => {
     const [cursors, setCursors] = useState({});
@@ -16,10 +17,20 @@ const CollaborationPage = () => {
 
         };
 
+        const handlerUserLeft = (data)=>{
+            setCursors((prev)=>{
+                const updated={...prev};
+                delete updated[data.userId];
+                return updated;
+            })
+        }
+
         socket.on("cursorMove", handleCursorMove);
+        socket.on("userLeft",handlerUserLeft);
 
         return () => {
             socket.off("cursorMove", handleCursorMove);
+            socket.off("userLeft",handlerUserLeft);
         };
 
     }, []);
@@ -48,6 +59,7 @@ const CollaborationPage = () => {
                 </div>
 
             ))}
+            <CollaborativeEditor />
         </div>
     )
 
