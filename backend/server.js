@@ -170,6 +170,18 @@ io.on("connection", (socket) => {
     }
     
   });
+
+  socket.on("yjsUpdate", (data) => {
+    console.log("YJS UPDATE RECEIVED FROM:", socket.user.name);
+
+    if (!socket.documentId) {
+      return;
+    }
+
+    socket.to(socket.documentId).emit("yjsUpdate", {
+      update: data.update,
+    });
+  });
 });
 
 httpServer.listen(PORT, () => {

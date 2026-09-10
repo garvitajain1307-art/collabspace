@@ -3,6 +3,7 @@ import socket from "../socket";
 import "./CollaborationPage.css";
 import CollaborativeEditor from "../components/editor/CollaborativeEditor";
 
+
 const CollaborationPage = () => {
     const [cursors, setCursors] = useState({});
 
