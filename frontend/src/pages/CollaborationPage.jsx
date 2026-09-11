@@ -1,13 +1,34 @@
 import { useEffect,useState } from "react";
+import { useParams } from "react-router-dom";
 import socket from "../socket";
 import "./CollaborationPage.css";
 import CollaborativeEditor from "../components/editor/CollaborativeEditor";
+import { useSelector } from "react-redux";
 
 
 const CollaborationPage = () => {
     const [cursors, setCursors] = useState({});
+    const { user } = useSelector((state) => state.auth);
+    const { documentId } = useParams();
+
+    console.log("DOCUMENT ID:", documentId);
 
     useEffect(() => {
+       
+         console.log("EFFECT RUNNING");
+         console.log("DOCUMENT ID INSIDE EFFECT:", documentId);
+
+         if (!documentId) {
+           console.log("NO DOCUMENT ID");
+           return;
+         }
+
+         console.log("ABOUT TO CALL JOIN DOCUMENT");
+
+        
+         console.log("JOIN DOCUMENT FUNCTION CALLED");
+
+        
 
         const handleCursorMove = (data) => {
 
@@ -29,12 +50,14 @@ const CollaborationPage = () => {
         socket.on("cursorMove", handleCursorMove);
         socket.on("userLeft",handlerUserLeft);
 
+        
+
         return () => {
             socket.off("cursorMove", handleCursorMove);
             socket.off("userLeft",handlerUserLeft);
         };
 
-    }, []);
+    }, [documentId]);
     return(
         <div className="collaboration-page">
             <h2>CollabSpace - Collaboration Test</h2>
@@ -60,7 +83,7 @@ const CollaborationPage = () => {
                 </div>
 
             ))}
-            <CollaborativeEditor />
+            <CollaborativeEditor documentId={documentId}  user={user}/>
         </div>
     )
 

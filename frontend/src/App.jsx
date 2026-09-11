@@ -74,11 +74,8 @@ function App() {
       <Route path="/login" element={isAuthenticated    ? <Navigate to="/dashboard" replace />: <Login />}/>
       <Route path="/signup" element={<Signup />} />
       <Route path="/dashboard" element={ isAuthenticated ? <div>Dashboard</div>: <Navigate to="/login" replace />}/>
-      <Route path="/collaboration" element={isAuthenticated? <CollaborationPage />  : <Navigate to="/login" replace />}/>
-      {/* <Route
-    path="/collaboration"
-    element={<CollaborationPage />}
-/> */}
+      <Route path="/collaboration/:documentId" element={isAuthenticated ? <CollaborationPage /> : <Navigate to="/login" replace />}/>
+   
     </Routes>
     
     </BrowserRouter>

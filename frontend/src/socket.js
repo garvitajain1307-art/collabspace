@@ -10,10 +10,15 @@ socket.on("connect", () => {
     
     console.log("CONNECTED:", socket.id);
 
-    socket.emit("joinDocument", "6a8bea47e04e876cf8ce68d7");
-
-   
+    
 });
+
+export const joinDocument = (documentId) => {
+
+    console.log("JOINING DOCUMENT:", documentId);
+    socket.emit("joinDocument", documentId);
+
+};
 
 
 socket.on("joinedDocument", (message) => {

@@ -1,6 +1,7 @@
 import { config } from "dotenv";
 import { createServer } from "http";
 import { Server } from "socket.io";
+import * as Y from "yjs";
 import cookie from "cookie";
 import jwt from "jsonwebtoken";
 import User from "./src/models/user.js";
@@ -56,6 +57,7 @@ io.use(async (socket, next) => {
 
 
 const documentUsers=new Map();
+const documentYDocs = new Map();
 
 //Whenever a client connects to our Socket.IO server, execute this function.
 io.on("connection", (socket) => {
@@ -104,6 +106,19 @@ io.on("connection", (socket) => {
           "You don't have access to this document",
         );
       }
+
+      if (!documentYDocs.has(documentId)) {
+        documentYDocs.set(documentId, new Y.Doc());
+      }
+
+      const ydoc = documentYDocs.get(documentId);
+      
+      const state = Y.encodeStateAsUpdate(ydoc);
+
+      socket.emit("yjsSync", {
+          update: Array.from(state)
+      });
+
 
       socket.join(documentId);
       socket.documentId=documentId;
@@ -171,18 +186,49 @@ io.on("connection", (socket) => {
     
   });
 
-  socket.on("yjsUpdate", (data) => {
+  socket.on("yjsUpdate", async(data) => {
     console.log("YJS UPDATE RECEIVED FROM:", socket.user.name);
 
     if (!socket.documentId) {
       return;
     }
 
+    const ydoc = documentYDocs.get(socket.documentId);
+    if (!ydoc) {
+      return;
+    }
+
+    const update = new Uint8Array(data.update);
+    Y.applyUpdate(ydoc, update);
+
+    console.log("BROADCASTING TO ROOM:", socket.documentId);
+
+    const sockets = await io.in(socket.documentId).fetchSockets();
+
+      console.log("ROOM SOCKETS:", sockets.map((s) => ({
+          socketId: s.id,
+          user: s.user?.name,
+          documentId: s.documentId
+      })));
     socket.to(socket.documentId).emit("yjsUpdate", {
       update: data.update,
     });
   });
+
+  socket.on("awarenessUpdate", (data) => {
+
+    console.log(
+        "AWARENESS UPDATE RECEIVED FROM:",
+        socket.user.name
+    );
+
+    socket.to(socket.documentId).emit("awarenessUpdate", {
+        update: data.update
+    });
+  });
 });
+
+
 
 httpServer.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);

@@ -3,23 +3,22 @@ import StarterKit from "@tiptap/starter-kit";
 import * as Y from "yjs";
 import Collaboration from "@tiptap/extension-collaboration";
 import { useEffect, useState } from "react";
-import socket from "../../socket";
+import socket, { joinDocument } from "../../socket";
+import {Awareness,encodeAwarenessUpdate, applyAwarenessUpdate} from "y-protocols/awareness";
 
-const CollaborativeEditor = () => {
+const CollaborativeEditor = ({ documentId, user }) => {
 
-    // Create Y.Doc only once for this editor instance
     const [ydoc] = useState(() => new Y.Doc());
+    const [awareness] = useState(() => new Awareness(ydoc));
+    const [synced, setSynced] = useState(false);
 
-    console.log("YDOC:", ydoc);
 
-
-    // Listen for Yjs changes and receive remote updates
+    // Yjs + Socket.IO
     useEffect(() => {
 
-        // Local Yjs update
         const handleUpdate = (update, origin) => {
 
-            // Don't send remote updates back to the server
+            // Don't send remote updates back to server
             if (origin === "remote") {
                 return;
             }
@@ -32,105 +31,193 @@ const CollaborativeEditor = () => {
         };
 
 
-        // Remote Yjs update received from server
         const handleRemoteUpdate = (data) => {
 
             console.log("REMOTE YJS UPDATE:", data);
 
             const update = new Uint8Array(data.update);
 
-            // Apply the update to this browser's Y.Doc
-            // "remote" marks the origin so handleUpdate
-            // doesn't send it back to the server
             Y.applyUpdate(ydoc, update, "remote");
         };
 
 
-        // Start listening for Yjs changes
+        const handleYjsSync = (data) => {
+
+            console.log("YJS SYNC RECEIVED:", data);
+
+            const update = new Uint8Array(data.update);
+
+            Y.applyUpdate(ydoc, update, "remote");
+
+            // Initial server state has now arrived
+            setSynced(true);
+        };
+
+        const handleAwarenessUpdate = ({ added, updated, removed }, origin) => {
+          // Don't send remote awareness updates back again
+          if (origin === "remote") {
+            return;
+          }
+
+          const changedClients = added.concat(updated, removed);
+
+          const update = encodeAwarenessUpdate(awareness, changedClients);
+
+          socket.emit("awarenessUpdate", {
+            update: Array.from(update),
+          });
+
+          console.log("AWARENESS UPDATE SENT:", changedClients);
+        };
+
+        awareness.on("update", handleAwarenessUpdate);
+
         ydoc.on("update", handleUpdate);
 
-        // Listen for updates from other users
         socket.on("yjsUpdate", handleRemoteUpdate);
+        socket.on("yjsSync", handleYjsSync);
+
+        const handleRemoteAwarenessUpdate = (data) => {
+          console.log("REMOTE AWARENESS UPDATE RECEIVED:", data);
+
+          const update = new Uint8Array(data.update);
+
+          applyAwarenessUpdate(awareness, update, "remote");
+        };
+
+        socket.on("awarenessUpdate", handleRemoteAwarenessUpdate);
 
 
-        // Cleanup listeners when component unmounts
+        if (documentId) {
+            joinDocument(documentId);
+        }
+
+        awareness.setLocalStateField("user", {
+            name: user?.name
+        });
+
+
         return () => {
+            awareness.off("update", handleAwarenessUpdate);
 
             ydoc.off("update", handleUpdate);
 
             socket.off("yjsUpdate", handleRemoteUpdate);
+            socket.off("yjsSync", handleYjsSync);
+            socket.off("awarenessUpdate", handleRemoteAwarenessUpdate);
 
         };
 
-    }, [ydoc]);
+    }, [ydoc, awareness, documentId]);
 
 
+    // Create TipTap editor
     const editor = useEditor({
 
         extensions: [
 
-            // Disable TipTap's normal undo/redo.
-            // Collaboration/Yjs handles history.
             StarterKit.configure({
                 undoRedo: false
             }),
 
-
-            // Connect TipTap with Y.Doc
             Collaboration.configure({
                 document: ydoc
             })
 
         ],
 
+        // Don't allow editing until initial Yjs state arrives
+        editable: synced,
 
-        // Runs after TipTap editor has been created
-        onCreate: ({ editor }) => {
-
-            // Get the Yjs XML fragment used by TipTap
-            const fragment = ydoc.getXmlFragment("default");
-
-
-            // Only add initial content if the document
-            // does not already contain anything
-            if (fragment.length === 0) {
-
-                editor.commands.setContent(`
-                    <h1>Project Plan</h1>
-
-                    <h2>Project Overview</h2>
-
-                    <p>
-                        This document contains the shared project plan for the team.
-                    </p>
-
-                    <h2>Goals</h2>
-
-                    <ul>
-                        <li>Build a real-time collaborative workspace</li>
-                        <li>Support comments and suggestions</li>
-                        <li>Maintain document history</li>
-                        <li>Enable AI-assisted editing</li>
-                    </ul>
-
-                    <h2>Milestones</h2>
-
-                    <ol>
-                        <li>Collaborative editor</li>
-                        <li>Comments and suggestions</li>
-                        <li>Version history</li>
-                        <li>AI assistance</li>
-                    </ol>
-                `);
-
-            }
-
+        onCreate: () => {
+            console.log("EDITOR CREATED");
         }
 
     });
 
 
-    // Editor has not been created yet
+    // Create initial document only AFTER Yjs sync
+    useEffect(() => {
+
+        if (!editor || !synced) {
+            return;
+        }
+
+        const fragment = ydoc.getXmlFragment("default");
+
+        console.log(
+            "FRAGMENT AFTER SYNC:",
+            fragment.toJSON()
+        );
+
+
+        // Only create default content for a completely empty document
+        if (fragment.length === 0) {
+
+            editor.commands.setContent(`
+
+                <h1>Project Plan</h1>
+
+                <h2>Project Overview</h2>
+
+                <p>
+                    This document contains the shared project plan for the team.
+                </p>
+
+                <h2>Goals</h2>
+
+                <ul>
+
+                    <li>
+                        Build a real-time collaborative workspace
+                    </li>
+
+                    <li>
+                        Support comments and suggestions
+                    </li>
+
+                    <li>
+                        Maintain document history
+                    </li>
+
+                    <li>
+                        Enable AI-assisted editing
+                    </li>
+
+                </ul>
+
+                <h2>Milestones</h2>
+
+                <ol>
+
+                    <li>
+                        Collaborative editor
+                    </li>
+
+                    <li>
+                        Comments and suggestions
+                    </li>
+
+                    <li>
+                        Version history
+                    </li>
+
+                    <li>
+                        AI assistance
+                    </li>
+
+                </ol>
+
+            `);
+
+        }
+
+        // Make editor editable after initialization
+        editor.setEditable(true);
+
+    }, [editor, synced]);
+
+
     if (!editor) {
         return null;
     }
@@ -140,6 +227,7 @@ const CollaborativeEditor = () => {
         <div>
 
             {/* Editor toolbar */}
+
             <div>
 
                 <button
@@ -181,6 +269,7 @@ const CollaborativeEditor = () => {
 
 
             {/* Collaborative editor */}
+
             <EditorContent editor={editor} />
 
         </div>
