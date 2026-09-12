@@ -8,6 +8,7 @@ import User from "./src/models/user.js";
 import Document from "./src/models/document.js";
 import Workspace from "./src/models/workspace.js";
 import { getDocumentAccess } from "./src/utils/documentAccess.js";
+import Version from "./src/models/version.js";
 
 config();
 
@@ -106,13 +107,19 @@ io.on("connection", (socket) => {
           "You don't have access to this document",
         );
       }
+      ///////////////////////
 
       if (!documentYDocs.has(documentId)) {
-        documentYDocs.set(documentId, new Y.Doc());
+         const ydoc = new Y.Doc();
+          if (document.content && document.content.update) {
+            const savedUpdate = new Uint8Array(document.content.update);
+
+            Y.applyUpdate(ydoc, savedUpdate);
+          }
+          documentYDocs.set(documentId, ydoc);
       }
 
       const ydoc = documentYDocs.get(documentId);
-      
       const state = Y.encodeStateAsUpdate(ydoc);
 
       socket.emit("yjsSync", {
@@ -200,6 +207,34 @@ io.on("connection", (socket) => {
 
     const update = new Uint8Array(data.update);
     Y.applyUpdate(ydoc, update);
+    try {
+      
+      const document = await Document.findById(socket.documentId);
+
+      
+      if (!document) {
+        console.log("DOCUMENT NOT FOUND");
+        return;
+      }
+
+      // Convert the complete Y.Doc into a storable update
+      const state = Y.encodeStateAsUpdate(ydoc);
+
+      // Store the Yjs state in the Mixed content field
+      document.content = {
+        update: Array.from(state),
+      };
+
+      
+      await document.save();
+
+      console.log("DOCUMENT SAVED TO MONGODB");
+    } catch (error) {
+      
+      console.log("DOCUMENT SAVE ERROR:", error);
+    }
+
+  
 
     console.log("BROADCASTING TO ROOM:", socket.documentId);
 

@@ -2,15 +2,19 @@ import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import * as Y from "yjs";
 import Collaboration from "@tiptap/extension-collaboration";
+// import CollaborationCaret from "@tiptap/extension-collaboration-caret";
 import { useEffect, useState } from "react";
 import socket, { joinDocument } from "../../socket";
 import {Awareness,encodeAwarenessUpdate, applyAwarenessUpdate} from "y-protocols/awareness";
+
 
 const CollaborativeEditor = ({ documentId, user }) => {
 
     const [ydoc] = useState(() => new Y.Doc());
     const [awareness] = useState(() => new Awareness(ydoc));
     const [synced, setSynced] = useState(false);
+    const [remoteUsers, setRemoteUsers] = useState([]);
+    const [remoteCursors, setRemoteCursors] = useState([]);
 
 
     // Yjs + Socket.IO
@@ -83,7 +87,33 @@ const CollaborativeEditor = ({ documentId, user }) => {
           const update = new Uint8Array(data.update);
 
           applyAwarenessUpdate(awareness, update, "remote");
-        };
+
+          console.log("REMOTE AWARENESS UPDATE RECEIVED:", data);
+
+          // Get all Awareness states
+          const states = awareness.getStates();
+
+          console.log("ALL AWARENESS STATES:", Array.from(states.entries()));
+
+          // Convert the Map into an array
+          const users = Array.from(states.entries())
+            .filter(([clientId]) => {
+                return clientId !== awareness.clientID;
+            })
+            .map(
+            ([clientId, state]) => ({
+              clientId: clientId,
+              ...state,
+            }),
+          );
+
+          // Store the Awareness states in React
+          setRemoteUsers(users);
+
+        //   const states = awareness.getStates();
+
+          
+        };;
 
         socket.on("awarenessUpdate", handleRemoteAwarenessUpdate);
 
@@ -110,6 +140,11 @@ const CollaborativeEditor = ({ documentId, user }) => {
 
     }, [ydoc, awareness, documentId]);
 
+    useEffect(() => {
+        console.log("REMOTE USERS STATE:", remoteUsers);
+    }, [remoteUsers]);
+
+    
 
     // Create TipTap editor
     const editor = useEditor({
@@ -122,7 +157,12 @@ const CollaborativeEditor = ({ documentId, user }) => {
 
             Collaboration.configure({
                 document: ydoc
-            })
+            }),
+
+            // CollaborationCaret.configure({
+            //     awareness: awareness,
+            //     user:{name:user?.name || "Anonymous"}
+            // })
 
         ],
 
@@ -134,6 +174,92 @@ const CollaborativeEditor = ({ documentId, user }) => {
         }
 
     });
+
+    useEffect(() => {
+      
+      if (!editor) {
+        return;
+      }
+
+      // Check every remote user's cursor
+      remoteUsers.forEach((remoteUser) => {
+        // Make sure this user actually has cursor information
+        if (!remoteUser.cursor) {
+          return;
+        }
+
+        const { from } = remoteUser.cursor;
+
+        // Convert the Tiptap document position into a position in the actual editor DOM
+        const coords = editor.view.coordsAtPos(from);
+
+        console.log("REMOTE CURSOR:",remoteUser.user?.name,"X:",coords.left,"Y:",coords.top);
+      });
+    }, [editor, remoteUsers]);
+
+    useEffect(() => {
+      // Don't do anything until the editor exists
+      if (!editor) {
+        return;
+      }
+
+      const cursors = [];
+
+      // Check every remote user
+      remoteUsers.forEach((remoteUser) => {
+        // Ignore users who don't currently have cursor data
+        if (!remoteUser.cursor) {
+          return;
+        }
+
+        const { from } = remoteUser.cursor;
+
+        // Convert Tiptap document position to screen coordinates
+        const coords = editor.view.coordsAtPos(from);
+
+        // Store the information needed to draw the cursor
+        cursors.push({
+          clientId: remoteUser.clientId,
+          name: remoteUser.user?.name,
+          x: coords.left,
+          y: coords.top,
+        });
+      });
+
+      // Update React state
+      setRemoteCursors(cursors);
+    }, [editor, remoteUsers]);
+
+
+    useEffect(() => {
+      
+      if (!editor) {
+        return;
+      }
+
+      //runs whenever the cursor/selection changes
+      const handleSelectionUpdate = () => {
+        const { from, to } = editor.state.selection;
+
+        // Store the cursor/selection position
+        // inside the local Awareness state
+        awareness.setLocalStateField("cursor", {
+          from: from,
+          to: to,
+        });
+
+        console.log("MY AWARENESS STATE:", awareness.getLocalState());
+      };
+
+
+      
+      editor.on("selectionUpdate", handleSelectionUpdate);
+
+      
+      return () => {
+        editor.off("selectionUpdate", handleSelectionUpdate);
+      };
+    }, [editor, awareness]);
 
 
     // Create initial document only AFTER Yjs sync
@@ -223,57 +349,53 @@ const CollaborativeEditor = ({ documentId, user }) => {
     }
 
 
-    return (
-        <div>
+   return (
+     <div>
+       {/* Editor toolbar */}
+       <div>
+         <button onClick={() => editor.chain().focus().toggleBold().run()}>
+           Bold
+         </button>
 
-            {/* Editor toolbar */}
+         <button onClick={() => editor.chain().focus().toggleItalic().run()}>
+           Italic
+         </button>
 
-            <div>
+         <button
+           onClick={() => editor.chain().focus().toggleBulletList().run()}
+         >
+           Bullet List
+         </button>
 
-                <button
-                    onClick={() =>
-                        editor.chain().focus().toggleBold().run()
-                    }
-                >
-                    Bold
-                </button>
+         <button
+           onClick={() => editor.chain().focus().toggleOrderedList().run()}
+         >
+           Numbered List
+         </button>
+       </div>
 
+       {/* Remote users' cursors */}
+       {remoteCursors.map((cursor) => (
+         <div
+           key={cursor.clientId}
+           className="remote-cursor"
+           style={{
+             left: `${cursor.x}px`,
+             top: `${cursor.y}px`,
+           }}
+         >
+           {/* Vertical line showing the remote cursor */}
+           <div className="remote-cursor-line"></div>
 
-                <button
-                    onClick={() =>
-                        editor.chain().focus().toggleItalic().run()
-                    }
-                >
-                    Italic
-                </button>
+           {/* Remote user's name */}
+           <div className="remote-cursor-name">{cursor.name}</div>
+         </div>
+       ))}
 
-
-                <button
-                    onClick={() =>
-                        editor.chain().focus().toggleBulletList().run()
-                    }
-                >
-                    Bullet List
-                </button>
-
-
-                <button
-                    onClick={() =>
-                        editor.chain().focus().toggleOrderedList().run()
-                    }
-                >
-                    Numbered List
-                </button>
-
-            </div>
-
-
-            {/* Collaborative editor */}
-
-            <EditorContent editor={editor} />
-
-        </div>
-    );
+       {/* Collaborative editor */}
+       <EditorContent editor={editor} />
+     </div>
+   );
 };
 
 export default CollaborativeEditor;

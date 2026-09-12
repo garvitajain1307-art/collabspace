@@ -1,9 +1,9 @@
 .collaboration-page {
     width: 100vw;
-    height: 100vh;
+    min-height: 100vh;
     position: relative;
     background: #f5f5f5;
-    overflow: hidden;
+    overflow-y: auto;
 }
 
 .collaboration-page h2 {
@@ -22,6 +22,30 @@
 }
 
 .cursor-name {
+    background: black;
+    color: white;
+    padding: 3px 7px;
+    border-radius: 5px;
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+/* Remote user's cursor container */
+.remote-cursor {
+    position: fixed;
+    pointer-events: none;
+    z-index: 1000;
+}
+
+/* Vertical line representing the remote cursor */
+.remote-cursor-line {
+    width: 2px;
+    height: 22px;
+    background: red;
+}
+
+/* Name displayed above/beside the cursor */
+.remote-cursor-name {
     background: black;
     color: white;
     padding: 3px 7px;
