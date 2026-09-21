@@ -13,6 +13,7 @@ const CollaborativeEditor = ({ documentId, user }) => {
     const [ydoc] = useState(() => new Y.Doc());
     const [awareness] = useState(() => new Awareness(ydoc));
     const [synced, setSynced] = useState(false);
+    const [access, setAccess] = useState("viewer");
     const [remoteUsers, setRemoteUsers] = useState([]);
     const [remoteCursors, setRemoteCursors] = useState([]);
 
@@ -52,6 +53,7 @@ const CollaborativeEditor = ({ documentId, user }) => {
             const update = new Uint8Array(data.update);
 
             Y.applyUpdate(ydoc, update, "remote");
+            setAccess(data.access);
 
             // Initial server state has now arrived
             setSynced(true);
@@ -167,13 +169,27 @@ const CollaborativeEditor = ({ documentId, user }) => {
         ],
 
         // Don't allow editing until initial Yjs state arrives
-        editable: synced,
+        editable:synced &&(access === "owner" || access === "editor"),
 
         onCreate: () => {
             console.log("EDITOR CREATED");
         }
 
     });
+
+    useEffect(() => {
+      
+      if (!editor) {
+        return;
+      }
+
+      
+      const canEdit = access === "owner" || access === "editor";
+
+      // Tell Tiptap whether editing is allowed.
+      editor.setEditable(canEdit);
+    }, [editor, access]);
+    
 
     useEffect(() => {
       
@@ -337,9 +353,6 @@ const CollaborativeEditor = ({ documentId, user }) => {
             `);
 
         }
-
-        // Make editor editable after initialization
-        editor.setEditable(true);
 
     }, [editor, synced]);
 

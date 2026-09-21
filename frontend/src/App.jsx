@@ -13,6 +13,7 @@ import Login from './pages/Login'
 import Signup from './pages/Signup'
 import CollaborationPage from "./pages/CollaborationPage";
 
+import Dashboard from "./pages/Dashboard/Dashboard";
 
 
 function App() {
@@ -73,7 +74,7 @@ function App() {
       <Route path="/"element={isAuthenticated? <Navigate to="/dashboard" replace />: <Login />}/>
       <Route path="/login" element={isAuthenticated    ? <Navigate to="/dashboard" replace />: <Login />}/>
       <Route path="/signup" element={<Signup />} />
-      <Route path="/dashboard" element={ isAuthenticated ? <div>Dashboard</div>: <Navigate to="/login" replace />}/>
+      <Route path="/dashboard" element={ isAuthenticated ? <Dashboard />: <Navigate to="/login" replace />}/>
       <Route path="/collaboration/:documentId" element={isAuthenticated ? <CollaborationPage /> : <Navigate to="/login" replace />}/>
    
     </Routes>

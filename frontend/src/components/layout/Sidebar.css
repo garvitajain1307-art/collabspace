@@ -1,0 +1,433 @@
+/* =====================================================
+   SIDEBAR
+   ===================================================== */
+
+.sidebar {
+    width: 230px;
+    height: 100vh;
+
+    /* Keeps the sidebar fixed while the main
+       dashboard content scrolls separately. */
+    position: fixed;
+    left: 0;
+    top: 0;
+
+    display: flex;
+    flex-direction: column;
+
+    background: #f3f1fb;
+    border-right: 1px solid #e3def2;
+    color: #454052;
+
+    box-sizing: border-box;
+
+    
+}
+
+
+/* =====================================================
+   HEADER / LOGO
+   ===================================================== */
+
+.sidebar-header {
+    height: 54px;
+
+    display: flex;
+    align-items: center;
+
+    padding: 0 14px;
+
+    border-bottom: 1px solid #e3def2;
+
+    flex-shrink: 0;
+}
+
+
+/* Purple square logo */
+
+.sidebar-logo {
+    width: 26px;
+    height: 26px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    margin-right: 9px;
+
+    background: #6c5ce7;
+
+    color: white;
+
+    border-radius: 7px;
+
+    font-size: 15px;
+    font-weight: 600;
+}
+
+
+/* CollabSpace text */
+
+.sidebar-brand {
+    font-size: 15px;
+    color: #302d3a;
+    font-weight: 600;
+
+}
+
+
+/* =====================================================
+   MAIN NAVIGATION
+   ===================================================== */
+
+.sidebar-navigation {
+    display: flex;
+    flex-direction: column;
+
+    padding: 10px 9px 8px;
+
+    gap: 2px;
+}
+
+
+/* Every navigation item */
+
+.sidebar-nav-item {
+    width: 100%;
+    height: 36px;
+
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    padding: 0 10px;
+
+    border: none;
+    border-left: 2px solid transparent;
+    border-radius: 8px;
+
+    background: transparent;
+
+    color: #625e70;
+
+    font-family: inherit;
+    font-size: 13.5px;
+
+    cursor: pointer;
+    text-align: left;
+
+    transition:
+        background 0.15s ease,
+        color 0.15s ease;
+}
+
+
+/* Hover */
+
+.sidebar-nav-item:hover {
+    background: #ebe8f7;
+    color: #6656d6;
+}
+
+
+/* Active navigation item */
+
+.sidebar-nav-item.active {
+    background: #ddd7f8;
+    color: #6656d6;
+    font-weight: 500;
+
+    /* Creates the thin purple line on the left */
+    border-left: 2px solid #705ee8;
+
+    /* Keeps the text/icon from shifting when border appears */
+    padding-left: 8px;
+}
+
+
+/* =====================================================
+   WORKSPACE SECTION
+   ===================================================== */
+
+   
+.sidebar-section {
+    padding: 9px 9px 0;
+
+     border-top: 1px solid #e3def2;
+}
+
+
+/* "WORKSPACES" label */
+
+.sidebar-section-title {
+    padding: 5px 8px 8px;
+
+    color: #807a91;
+
+    font-size: 10.5px;
+    font-weight: 600;
+
+    letter-spacing: 0.08em;
+}
+
+
+/* Workspace list */
+
+.workspace-list {
+    display: flex;
+    flex-direction: column;
+
+    gap: 2px;
+}
+
+
+/* Individual workspace */
+
+.workspace-item {
+    width: 100%;
+    height: 34px;
+
+    display: flex;
+    align-items: center;
+
+    gap: 9px;
+
+    padding: 0 8px;
+
+    border: none;
+    border-radius: 7px;
+
+    background: transparent;
+
+    color: #625e70;
+
+    font-family: inherit;
+    font-size: 13px;
+
+    cursor: pointer;
+
+    text-align: left;
+
+    transition: background 0.15s ease;
+}
+
+
+.workspace-item:hover {
+    background: #e7e2f8;
+}
+
+
+/* Small workspace icon */
+
+.workspace-icon {
+    width: 18px;
+    height: 18px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 5px;
+
+    background: #e5e0fa;
+    color: #7566d8;
+
+    font-size: 10px;
+    font-weight: 600;
+
+    flex-shrink: 0;
+}
+
+
+/* Workspace name */
+
+.workspace-name {
+    overflow: hidden;
+
+    white-space: nowrap;
+
+    text-overflow: ellipsis;
+}
+
+
+/* =====================================================
+   ADD WORKSPACE
+   ===================================================== */
+
+.add-workspace-button {
+    width: 100%;
+    height: 34px;
+
+    display: flex;
+    align-items: center;
+
+    gap: 9px;
+
+    padding: 0 8px;
+
+    margin-top: 3px;
+
+    border: none;
+    border-radius: 7px;
+
+    background: transparent;
+
+    color: #625e70;
+
+    font-family: inherit;
+    font-size: 13px;
+
+    cursor: pointer;
+
+    text-align: left;
+}
+
+
+.add-workspace-button:hover {
+    background: #e7e2f8;
+
+    color: #5f50ce;
+}
+
+
+/* =====================================================
+   BOTTOM SECTION
+   ===================================================== */
+
+.sidebar-bottom {
+    margin-top: auto;
+
+    border-top: 1px solid #e3def2;
+
+    padding: 9px;
+
+    flex-shrink: 0;
+}
+
+
+/* =====================================================
+   SETTINGS
+   ===================================================== */
+
+.sidebar-settings {
+    width: 100%;
+    height: 35px;
+
+    display: flex;
+    align-items: center;
+
+    gap: 10px;
+
+    padding: 0 9px;
+
+    border: none;
+    border-radius: 7px;
+
+    background: transparent;
+
+    color: #625e70;
+
+    font-family: inherit;
+    font-size: 13px;
+
+    cursor: pointer;
+
+    text-align: left;
+}
+
+
+.sidebar-settings:hover {
+    background: #e7e2f8;
+
+    color: #5f50ce;
+}
+
+
+/* =====================================================
+   USER PROFILE
+   ===================================================== */
+
+.sidebar-user {
+    display: flex;
+    align-items: center;
+
+    gap: 9px;
+
+    padding: 9px 7px 4px;
+
+    margin-top: 4px;
+}
+
+
+/* User avatar */
+
+.user-avatar {
+    width: 29px;
+    height: 29px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    flex-shrink: 0;
+
+    border-radius: 50%;
+
+    background: #e5e0fa;
+    color: #6656d6;
+
+    font-size: 10px;
+    font-weight: 600;
+}
+
+
+/* User name + email wrapper */
+
+.user-information {
+    min-width: 0;
+
+    flex: 1;
+}
+
+
+/* Name */
+
+.user-name {
+    overflow: hidden;
+
+    white-space: nowrap;
+
+    text-overflow: ellipsis;
+
+    color: #302c3b;
+
+    font-size: 12.5px;
+    font-weight: 550;
+}
+
+
+/* Email */
+
+.user-email {
+    overflow: hidden;
+
+    white-space: nowrap;
+
+    text-overflow: ellipsis;
+
+    margin-top: 2px;
+
+    color: #817b90;
+
+    font-size: 10.5px;
+}
+
+
+/* Dropdown */
+
+.user-dropdown-icon {
+    color: #817b90;
+
+    flex-shrink: 0;
+}
+

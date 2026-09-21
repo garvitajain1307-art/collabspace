@@ -123,7 +123,8 @@ io.on("connection", (socket) => {
       const state = Y.encodeStateAsUpdate(ydoc);
 
       socket.emit("yjsSync", {
-          update: Array.from(state)
+          update: Array.from(state),
+          access: access
       });
 
 
@@ -159,14 +160,7 @@ io.on("connection", (socket) => {
     }
   });
 
-  socket.on("cursorMove",(position)=>{
-    socket.to(socket.documentId).emit("cursorMove",{
-        userId:socket.user._id,
-        name:socket.user.name,
-        x:position.x,
-        y:position.y
-    })
-  })
+  
 
   socket.on("disconnect", () => {
     console.log("User disconnected:", socket.id);
@@ -204,6 +198,26 @@ io.on("connection", (socket) => {
     if (!ydoc) {
       return;
     }
+
+    const document=await Document.findById(socket.documentId);
+    if(!document){
+      console.log("document not found");
+      return;
+    }
+
+     const workspace = await Workspace.findOne({ _id: document.workspace,"members.user": socket.user._id,});
+
+     if(!workspace){
+      console.log("User is not a member of the workspace");
+      return;
+     }
+
+     const access = getDocumentAccess(socket.user,document,workspace);
+     console.log("YJS UPDATE ACCESS:", access);
+      if(access!=="owner" && access!=="editor"){
+        console.log("Update Rejected: User is VIEWER");
+        return;
+      }
 
     const update = new Uint8Array(data.update);
     Y.applyUpdate(ydoc, update);

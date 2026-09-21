@@ -39,27 +39,7 @@ socket.on("onlineUsers", (users) => {
 });
 
 
-let lastSent=0;
 
-document.addEventListener("mousemove",(event)=>{
-    //  console.log("MOUSE MOVED");
-    const now=Date.now();
-    if(now-lastSent<50){
-        return;
-    }
-    lastSent=now;
-    // console.log("SENDING CURSOR:", event.clientX, event.clientY);
-    socket.emit("cursorMove", {
-        x: event.clientX,
-        y: event.clientY
-    });
-    
-})
-
-
-socket.on("cursorMove", (data) => {
-    console.log("CURSOR MOVE:", data);
-});
 
 socket.on("joinError", (message) => {
     console.log("JOIN ERROR:", message);
