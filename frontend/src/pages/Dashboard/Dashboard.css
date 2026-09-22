@@ -1,0 +1,25 @@
+.dashboard-page {
+    min-height: 100vh;
+
+    display: flex;
+
+    background: #f7f6fd;
+}
+
+
+/* --------------------------------------------------
+   MAIN CONTENT
+
+   Sidebar is 230px wide, so the main content
+   must leave that much space on the left.
+-------------------------------------------------- */
+
+.dashboard-content {
+    margin-left: 230px;
+
+    width: calc(100% - 230px);
+
+    min-height: 100vh;
+
+    box-sizing: border-box;
+}

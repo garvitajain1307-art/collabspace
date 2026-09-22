@@ -9,12 +9,18 @@ import {
 } from "lucide-react";
 
 import {useSelector} from "react-redux";
+import {useEffect} from "react";
+import {useDispatch} from "react-redux";
+import {setWorkspaces, setSelectedWorkspace, clearSelectedWorkspace, setLoading, setError, clearError} from "../../features/workspace/workspaceSlice";
 
 import "./Sidebar.css";
 
 const Sidebar = () => {
 
+    const dispatch=useDispatch();
+
     const {user}=useSelector((state)=>state.auth);
+    const {workspaces,loading,error}=useSelector((state)=>state.workspace);
 
 
     // --------------------------------------------------
@@ -44,25 +50,33 @@ const Sidebar = () => {
         },
     ];
 
+    useEffect(()=>{
+        const fetchWorkspaces=async()=>{
+            dispatch(setLoading());
+            try{
+                const res=await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/v1/workspace/getMyWorkspaces`,
+                    {
+                    credentials:"include"
+                }
+                );
 
-    // --------------------------------------------------
-    // STATIC WORKSPACE DATA
-    // Later this will come from workspaceSlice/API.
-    // --------------------------------------------------
-    const workspaces = [
-        {
-            name: "CollabSpace Team",
-            initial: "C",
-        },
-        {
-            name: "Product Development",
-            initial: "P",
-        },
-        {
-            name: "College Projects",
-            initial: "C",
-        },
-    ];
+                const data=await res.json();
+                if(data.success){
+                    dispatch(setWorkspaces(data.workspaces));
+                }else{
+                    dispatch(setError(data.message));
+                }
+            }catch(err){
+                console.log(err);
+                dispatch(setError("Failed to fetch workspaces"));
+            }
+
+        }
+        fetchWorkspaces();
+    },[dispatch])
+
+
+   
 
 
     return (
@@ -133,18 +147,18 @@ const Sidebar = () => {
                     {workspaces.map((workspace) => (
 
                         <button
-                            key={workspace.name}
+                            key={workspace._id}
                             className="workspace-item"
                         >
 
                             {/* Workspace initial/icon */}
                             <span className="workspace-icon">
-                                {workspace.initial}
+                                {workspace?.name?.split(" ").map((word)=>word[0]).join("").slice(0,1).toUpperCase()}
                             </span>
 
                             {/* Workspace name */}
                             <span className="workspace-name">
-                                {workspace.name}
+                                {workspace?.name}
                             </span>
 
                         </button>
