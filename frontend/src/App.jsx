@@ -12,6 +12,7 @@ import { setUser,logoutUser} from './features/auth/authSlice'
 import Login from './pages/Login'
 import Signup from './pages/Signup'
 import CollaborationPage from "./pages/CollaborationPage";
+import WorkspaceHome from "./pages/Workspace/WorkspaceHome";
 
 import Dashboard from "./pages/Dashboard/Dashboard";
 
@@ -76,7 +77,7 @@ function App() {
       <Route path="/signup" element={<Signup />} />
       <Route path="/dashboard" element={ isAuthenticated ? <Dashboard />: <Navigate to="/login" replace />}/>
       <Route path="/collaboration/:documentId" element={isAuthenticated ? <CollaborationPage /> : <Navigate to="/login" replace />}/>
-   
+   <Route path="/workspace/:workspaceId" element={isAuthenticated ? <WorkspaceHome /> : <Navigate to="/login" replace /> }/>
     </Routes>
     
     </BrowserRouter>

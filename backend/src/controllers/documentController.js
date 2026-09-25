@@ -83,7 +83,7 @@ export const getWorkspaceDocuments=asyncHandler(async(req,res,next)=>{
         return next(new ErrorHandler("workspace not found or you are not a member",404));
     }
 
-    const documents = await Document.find({ workspace: workspaceId});
+    const documents = await Document.find({ workspace: workspaceId}).populate("owner", "name email");;
 
     const documentsWithAccess=documents.map(document=>{
         const access=getDocumentAccess(user,document,workspace);

@@ -11,6 +11,7 @@ import {
 import {useSelector} from "react-redux";
 import {useEffect} from "react";
 import {useDispatch} from "react-redux";
+import {useNavigate} from "react-router-dom";
 import {setWorkspaces, setSelectedWorkspace, clearSelectedWorkspace, setLoading, setError, clearError} from "../../features/workspace/workspaceSlice";
 
 import "./Sidebar.css";
@@ -21,6 +22,7 @@ const Sidebar = () => {
 
     const {user}=useSelector((state)=>state.auth);
     const {workspaces,loading,error}=useSelector((state)=>state.workspace);
+    const navigate=useNavigate();
 
 
     // --------------------------------------------------
@@ -142,13 +144,15 @@ const Sidebar = () => {
 
 
                 {/* Workspace list */}
-                <div className="workspace-list">
+                <div className="workspace-list" >
 
                     {workspaces.map((workspace) => (
 
                         <button
                             key={workspace._id}
                             className="workspace-item"
+                            onClick={() => {navigate(`/workspace/${workspace._id}`);}}
+                             
                         >
 
                             {/* Workspace initial/icon */}

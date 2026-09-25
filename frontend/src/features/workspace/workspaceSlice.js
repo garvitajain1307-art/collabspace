@@ -18,6 +18,8 @@ const workspaceSlice=createSlice({
         },
         setSelectedWorkspace:(state,action)=>{
             state.selectedWorkspace=action.payload;
+            state.loading=false;
+            state.error = null;
             
         },
         clearSelectedWorkspace:(state)=>{

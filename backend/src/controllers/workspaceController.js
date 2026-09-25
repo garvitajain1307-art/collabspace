@@ -65,7 +65,7 @@ export const getWorkspace=asyncHandler(async(req,res,next)=>{
         return next(new ErrorHandler("Workspace Id is required",400));
     }
 
-    const workspace = await Workspace.findOne({ _id: workspaceId,"members.user": user._id});
+    const workspace = await Workspace.findOne({ _id: workspaceId,"members.user": user._id}).populate("owner", "name email");;
     if(!workspace){
         return next(new ErrorHandler("Workspace not found",404));
     }

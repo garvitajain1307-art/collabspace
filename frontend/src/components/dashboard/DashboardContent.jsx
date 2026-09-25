@@ -9,10 +9,16 @@ import {
 
 import "./DashboardContent.css";
 import { useSelector } from "react-redux";
+import {useNavigate} from "react-router-dom";
+import { setSelectedWorkspace } from "../../features/workspace/workspaceSlice";
+import { useDispatch } from "react-redux";
+
 
 const DashboardContent = () => {
     const {user}=useSelector((state)=>state.auth);
     const {workspaces}=useSelector((state)=>state.workspace);
+    const navigate = useNavigate();
+    const dispatch=useDispatch()
 
     return (
       <div className="dashboard-main-content">
@@ -54,13 +60,13 @@ const DashboardContent = () => {
 
           <div className="workspace-card-grid">
             {workspaces.map((workspace) => (
-              <div className="dashboard-workspace-card" key={workspace._id}>
+              <div className="dashboard-workspace-card" key={workspace._id} onClick={() =>  {dispatch(setSelectedWorkspace(workspace)); navigate(`/workspace/${workspace._id}`);}}>
                 <div className="workspace-card-top">
                   <div className="dashboard-workspace-icon">
                     {workspace?.name?.split(" ").map((word)=>word[0]).join("").slice(0,1).toUpperCase()}
                   </div>
 
-                  <button className="workspace-more-button">
+                  <button className="workspace-more-button" onClick={(event)=>{event.stopPropagation()}}>
                     <MoreHorizontal size={17} />
                   </button>
                 </div>
