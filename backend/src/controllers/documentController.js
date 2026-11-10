@@ -1,481 +1,648 @@
-import ErrorHandler from "../middlewares/error.js";
-import User from "../models/user.js";
-import Workspace from "../models/workspace.js";
-import WorkspaceInvitation from "../models/workspaceInvitation.js"
-import Document from "../models/document.js";
-import Folder from "../models/folder.js";
-import { asyncHandler } from "../middlewares/asyncHandler.js";
-import { getDocumentAccess } from "../utils/documentAccess.js";
 
 import mongoose from "mongoose";
-import crypto from "crypto";
 
-export const createDocument=asyncHandler(async(req,res,next)=>{
-    const user=req.user;
-    if(!user){
-        return next(new ErrorHandler("User not found",404));
-    }
-
-    const {workspaceId}=req.params;
-    const {title,content,folderId}=req.body;
-
-    if(!workspaceId ||!title){
-        return next(new ErrorHandler("WorkspaceId and title are required",400));
-    }
-
-    const workspace=await Workspace.findOne({_id:workspaceId,"members.user":user._id});
-
-    if(!workspace){
-        return next(new ErrorHandler("Workspace not found or you are not a member",404));
-    }
-
-    if(folderId){
-        const folder=await Folder.findOne({_id:folderId,workspace:workspaceId});
-
-        if(!folder){
-            return next(new ErrorHandler("Folder not found in this workspace",404));
-        }
-    }
-
-    const document=await Document.create({
-        title:title.trim(),
-        content:content||"",
-        owner:user._id,
-        workspace:workspaceId,
-        folder:folderId||null,
-        createdBy:user._id
-    })
-
-    if(!document){
-        return next(new ErrorHandler("Unable to create document",400));
-    }
-
-    workspace.documents.push(document._id);
-    await workspace.save();
-
-    user.ownedDocuments.push(document._id);
-    
-    await user.save();
-
-    res.status(201).json({
-        success:true,
-        message:"document created successfully",
-        document
-    })
-})
-
-export const getWorkspaceDocuments=asyncHandler(async(req,res,next)=>{
-    const user=req.user;
-
-    if(!user){
-        return next(new ErrorHandler("User not found",404));
-    }
-
-    const {workspaceId}=req.params;
-
-    if(!workspaceId){
-        return next(new ErrorHandler("WorkspaceId is required",400))
-    }
-
-    const workspace=await Workspace.findOne({_id:workspaceId,"members.user":user._id});
-
-    if(!workspace){
-        return next(new ErrorHandler("workspace not found or you are not a member",404));
-    }
-
-    const documents = await Document.find({ workspace: workspaceId}).populate("owner", "name email");;
-
-    const documentsWithAccess=documents.map(document=>{
-        const access=getDocumentAccess(user,document,workspace);
-
-        return{
-            ...document.toObject(),
-            access
-        };
-    })
-
-    res.status(200).json({
-        success:true,
-        message:"documents for this workspace fetched successfully",
-        documents:documentsWithAccess
-    })
-})
-
-export const getDocument=asyncHandler(async(req,res,next)=>{
-    const user=req.user;
-
-    if(!user){
-        return next(new ErrorHandler("user not found",404));
-    }
-
-    const {documentId}=req.params;
-
-    if(!documentId){
-        return next(new ErrorHandler("documentId is required",400));
-
-    }
-
-    const document=await Document.findById(documentId);
-
-    if(!document){
-        return next(new ErrorHandler("Document not found",404));
-    }
-
-    const workspace=await Workspace.findOne({_id:document.workspace,"members.user":user._id});
-    if(!workspace){
-        return next(new ErrorHandler("workspace not found or you are not a member",404));
-    }
-
-     const access = getDocumentAccess(user,document,workspace);
-     if (access === "none") {
-        return next(new ErrorHandler("You don't have access to this document",403));
-    }
-
-    res.status(200).json({
-        success:true,
-        message:"Document fetched successfully",
-        document
-    })
-
-})
-
-export const updateDocument=asyncHandler(async(req,res,next)=>{
-    const user=req.user;
-
-    if(!user){
-        return next(new ErrorHandler("User not found",404));
-    }
-
-    const {documentId}=req.params;
-    const {title,content,folderId}=req.body;
-
-    if(!documentId){
-        return next(new ErrorHandler("documentId is requires",400));
-    }
-
-    const document=await Document.findById(documentId);
-    if(!document){
-        return next(new ErrorHandler("Document not found",404));
-    }
-
-    const workspace=await Workspace.findOne({_id:document.workspace,"members.user":user._id});
-
-    if(!workspace){
-        return next(new ErrorHandler("workspace not found or you are not the member",404));
-    }
-
-    const access=getDocumentAccess(user,document,workspace);
-
-    if(access!=="owner" && access!=="editor"){
-        return next(new ErrorHandler("You don't have permission to edit this document",403));
-    }
-
-
-
-    if(title!==undefined){
-        if(!title.trim()){
-            return next(new ErrorHandler("Title cannot be empty",400));
-        }
-
-        document.title=title.trim();
-    }
-
-    if(content!==undefined){
-        document.content=content;
-    }
-
-    if(folderId!==undefined){
-        if(folderId===null || folderId===""){
-            document.folder=null;
-        }else{
-            const folder=await Folder.findOne({_id:folderId,workspace:document.workspace});
-
-            if(!folder){
-                return next(new ErrorHandler("Folder not found in this workspace",404));
-            }
-
-            document.folder=folderId;
-        }
-    }
-
-    await document.save();
-
-    res.status(200).json({
-        success:true,
-        message:"Document updated successfully",
-        document
-    })
-})
-
-export const deleteDocument=asyncHandler(async(req,res,next)=>{
-    const user=req.user;
-
-    if(!user){
-        return next(new ErrorHandler("User not found",404));
-    }
-
-    const {documentId}=req.params;
-
-    if(!documentId){
-        return next(new ErrorHandler("DocumentId id required",400));
-    }
-
-    const document=await Document.findById(documentId);
-
-    if(!document){
-        return next(new ErrorHandler("Document not found",404));
-    }
-
-    const workspace=await Workspace.findOne({_id:document.workspace,"members.user":user._id});
-
-    if(!workspace){
-        return next(new ErrorHandler("Workspace not found or you are not the member",404));
-    }
-
-    // if(document.owner.toString()!==user._id.toString()){
-    //     return next(new ErrorHandler("Only owner can delete this document",403));
-    // }
-
-    const access=getDocumentAccess(user,document,workspace);
-
-    if(access!=="owner"){
-        return next(new ErrorHandler("You don't have permission to delete this document",403));
-    }
-
-    workspace.documents.pull(documentId);
-    await workspace.save();
-
-   
-    await User.findByIdAndUpdate(document.owner, {
-        $pull: {
-            ownedDocuments: documentId
-        }
-    });
-
-    await Document.findByIdAndDelete(documentId);
-
-    res.status(200).json({
-        success: true,
-        message: "Document deleted successfully"
-    });
-
-})
-
-export const addCollaborator=asyncHandler(async(req,res,next)=>{
-    const user=req.user;
-    if(!user){
-        return next(new ErrorHandler("User not found",404));
-    }
-
-    const {documentId}=req.params;
-    const {userId,permission}=req.body;
-
-    if(!documentId || !userId|| !permission){
-        return next(new ErrorHandler("DocumentId, UserId and permissions are required",400));
-    }
-
-    if(permission !== "editor" && permission !=="viewer"){
-        return next(new ErrorHandler("Permission must be editor or viewer",400));
-    }
-
-    const document= await Document.findById(documentId);
-
-    if(!document){
-        return next(new ErrorHandler("Document not found",404));
-    }
-
-    const workspace=await Workspace.findOne({_id:document.workspace,"members.user":userId});
-
-    if(!workspace){
-        return next(new ErrorHandler("Collaborator is not a member of this workspace",400));
-    }
-
-
-    const access = getDocumentAccess(user, document, workspace);
-
-    if (access !== "owner") {
-        return next(new ErrorHandler( "Only owner can manage document permissions",403)
+import ErrorHandler from "../middlewares/error.js";
+import { asyncHandler } from "../middlewares/asyncHandler.js";
+
+import User from "../models/user.js";
+import Workspace from "../models/workspace.js";
+import Document from "../models/document.js";
+import Folder from "../models/folder.js";
+import Comment from "../models/comment.js";
+import Suggestion from "../models/suggestion.js";
+import Version from "../models/version.js";
+import Notification from "../models/notification.js";
+import Activity from "../models/activity.js";
+
+import { getDocumentAccess } from "../utils/documentAccess.js";
+import logActivity from "../utils/logActivity.js";
+
+const isValidId = (id) => mongoose.isValidObjectId(id);
+
+const canManageWorkspaceDocuments = (workspace, userId) => {
+  const member = workspace.members.find(
+    (item) => String(item.user) === String(userId)
+  );
+
+  return member && ["owner", "editor"].includes(member.role);
+};
+
+const isDocumentOwner = (document, userId) => {
+  return String(document.owner) === String(userId);
+};
+
+const getWorkspaceForUser = async (document, userId) => {
+  return Workspace.findOne({
+    _id: document.workspace,
+    "members.user": userId
+  });
+};
+
+// CREATE DOCUMENT
+export const createDocument = asyncHandler(async (req, res, next) => {
+  const { workspaceId } = req.params;
+  const { title, content, folderId } = req.body;
+
+  if (!isValidId(workspaceId)) {
+    return next(new ErrorHandler("Invalid workspace ID", 400));
+  }
+
+  if (typeof title !== "string" || !title.trim()) {
+    return next(new ErrorHandler("Document title is required", 400));
+  }
+
+  const workspace = await Workspace.findOne({
+    _id: workspaceId,
+    "members.user": req.user._id
+  });
+
+  if (!workspace) {
+    return next(
+      new ErrorHandler("Workspace not found or you are not a member", 404)
     );
-}
+  }
 
-    const member=await User.findById(userId);
+  if (!canManageWorkspaceDocuments(workspace, req.user._id)) {
+    return next(
+      new ErrorHandler("You cannot create documents in this workspace", 403)
+    );
+  }
 
-    if(!member){
-        return next(new ErrorHandler("Collaborator not found",404))
+  let selectedFolder = null;
+
+  if (folderId) {
+    if (!isValidId(folderId)) {
+      return next(new ErrorHandler("Invalid folder ID", 400));
     }
 
-    
-
-    if(document.owner.toString()===userId.toString()){
-        return next(new ErrorHandler("Document Owner cannot be added as collaborator",400));
-    }
-
-    const existingCollaborator=document.collaborators.find(collaborator=>collaborator.user.toString()===userId.toString());
-
-    if(existingCollaborator){
-        return next(new ErrorHandler("User is already a collaborator",400));
-
-    }
-
-    document.collaborators.push({
-        user:userId,
-        permission:permission
-    })
-
-    await document.save();
-    
-    res.status(200).json({
-        success: true,
-        message: "Collaborator added successfully",
-        document
+    selectedFolder = await Folder.findOne({
+      _id: folderId,
+      workspace: workspace._id
     });
 
+    if (!selectedFolder) {
+      return next(
+        new ErrorHandler("Folder not found in this workspace", 404)
+      );
+    }
+  }
 
+  const document = await Document.create({
+    title: title.trim(),
+    content: content === undefined ? {} : content,
+    owner: req.user._id,
+    workspace: workspace._id,
+    folder: selectedFolder?._id || null,
+    createdBy: req.user._id
+  });
 
-})
+  workspace.documents.addToSet(document._id);
+  await workspace.save();
 
-export const getCollaborators=asyncHandler(async(req,res,next)=>{
-    const user=req.user;
-    if(!user){
-        return next(new ErrorHandler("User not found",404));
+  await User.updateOne(
+    { _id: req.user._id },
+    { $addToSet: { ownedDocuments: document._id } }
+  );
+
+  await logActivity({
+    workspace: workspace._id,
+    user: req.user._id,
+    action: "document_created",
+    document: document._id,
+    metadata: { documentTitle: document.title }
+  });
+
+  return res.status(201).json({
+    success: true,
+    message: "Document created successfully",
+    document
+  });
+});
+
+// GET WORKSPACE DOCUMENTS
+export const getWorkspaceDocuments = asyncHandler(
+  async (req, res, next) => {
+    const { workspaceId } = req.params;
+
+    if (!isValidId(workspaceId)) {
+      return next(new ErrorHandler("Invalid workspace ID", 400));
     }
 
-    const {documentId}=req.params;
-    if(!documentId){
-        return next(new ErrorHandler("DocumentId is required",400));
-    }
-
-    const document=await Document.findById(documentId);
-    if(!document){
-        return next(new ErrorHandler("Document not found",404));
-    }
-
-    const workspace=await Workspace.findOne({_id:document.workspace,"members.user":user._id});
-
-    if(!workspace){
-        return next(new ErrorHandler("Workspace not found or you are not the member",404));
-    }
-
-    const access=getDocumentAccess(user,document,workspace);
-
-    if(access==="none"){
-        return next(new ErrorHandler("You don't have access to this resource",403));
-    }
-
-    const collaborators=await Document.findById(documentId).select("collaborators").populate("collaborators.user","name email");
-    res.status(200).json({
-        success: true,
-        message: "Collaborators fetched successfully",
-        collaborators: collaborators.collaborators
+    const workspace = await Workspace.findOne({
+      _id: workspaceId,
+      "members.user": req.user._id
     });
-})
 
-export const updateCollaboratorPermission=asyncHandler(async(req,res,next)=>{
-    const user=req.user;
-    if(!user){
-        return next(new ErrorHandler("User not found",404))
+    if (!workspace) {
+      return next(
+        new ErrorHandler("Workspace not found or you are not a member", 404)
+      );
     }
 
-    const {documentId,userId}=req.params;
-    const {permission}=req.body;
-    if(!documentId||!userId||!permission){
-        return next(new ErrorHandler("DocumentId, userId and permission are required",400));
+    const documents = await Document.find({
+      workspace: workspace._id
+    }).populate("owner", "name email");
+
+    const accessibleDocuments = documents
+      .map((document) => {
+        const access = getDocumentAccess(req.user, document, workspace);
+
+        if (access === "none") {
+          return null;
+        }
+
+        return {
+          ...document.toObject(),
+          access
+        };
+      })
+      .filter(Boolean);
+
+    return res.status(200).json({
+      success: true,
+      message: "Documents fetched successfully",
+      documents: accessibleDocuments
+    });
+  }
+);
+
+// GET SINGLE DOCUMENT
+export const getDocument = asyncHandler(async (req, res, next) => {
+  const { documentId } = req.params;
+
+  if (!isValidId(documentId)) {
+    return next(new ErrorHandler("Invalid document ID", 400));
+  }
+
+  const document = await Document.findById(documentId).populate(
+    "owner",
+    "name email"
+  );
+
+  if (!document) {
+    return next(new ErrorHandler("Document not found", 404));
+  }
+
+  const workspace = await getWorkspaceForUser(document, req.user._id);
+
+  if (!workspace) {
+    return next(
+      new ErrorHandler("Workspace not found or you are not a member", 404)
+    );
+  }
+
+  const access = getDocumentAccess(req.user, document, workspace);
+
+  if (access === "none") {
+    return next(
+      new ErrorHandler("You do not have access to this document", 403)
+    );
+  }
+
+  return res.status(200).json({
+    success: true,
+    message: "Document fetched successfully",
+    document,
+    access
+  });
+});
+
+// UPDATE DOCUMENT
+export const updateDocument = asyncHandler(async (req, res, next) => {
+  const { documentId } = req.params;
+  const { title, content, folderId } = req.body;
+
+  if (!isValidId(documentId)) {
+    return next(new ErrorHandler("Invalid document ID", 400));
+  }
+
+  const document = await Document.findById(documentId);
+
+  if (!document) {
+    return next(new ErrorHandler("Document not found", 404));
+  }
+
+  const workspace = await getWorkspaceForUser(document, req.user._id);
+
+  if (!workspace) {
+    return next(
+      new ErrorHandler("Workspace not found or you are not a member", 404)
+    );
+  }
+
+  const access = getDocumentAccess(req.user, document, workspace);
+
+  if (access !== "owner" && access !== "editor") {
+    return next(
+      new ErrorHandler("You do not have permission to edit this document", 403)
+    );
+  }
+
+  const previousTitle = document.title;
+  const previousFolder = document.folder;
+
+  if (title !== undefined) {
+    if (typeof title !== "string" || !title.trim()) {
+      return next(new ErrorHandler("Document title cannot be empty", 400));
+    }
+
+    document.title = title.trim();
+  }
+
+  if (content !== undefined) {
+    document.content = content;
+  }
+
+  if (folderId !== undefined) {
+    if (folderId === null || folderId === "") {
+      document.folder = null;
+    } else {
+      if (!isValidId(folderId)) {
+        return next(new ErrorHandler("Invalid folder ID", 400));
+      }
+
+      const folder = await Folder.findOne({
+        _id: folderId,
+        workspace: document.workspace
+      });
+
+      if (!folder) {
+        return next(
+          new ErrorHandler("Folder not found in this workspace", 404)
+        );
+      }
+
+      document.folder = folder._id;
+    }
+  }
+
+  await document.save();
+
+  await logActivity({
+    workspace: workspace._id,
+    user: req.user._id,
+    action: "document_updated",
+    document: document._id,
+    metadata: {
+      previousTitle,
+      newTitle: document.title,
+      previousFolder,
+      newFolder: document.folder
+    }
+  });
+
+  return res.status(200).json({
+    success: true,
+    message: "Document updated successfully",
+    document
+  });
+});
+
+// DELETE DOCUMENT
+export const deleteDocument = asyncHandler(async (req, res, next) => {
+  const { documentId } = req.params;
+
+  if (!isValidId(documentId)) {
+    return next(new ErrorHandler("Invalid document ID", 400));
+  }
+
+  const document = await Document.findById(documentId);
+
+  if (!document) {
+    return next(new ErrorHandler("Document not found", 404));
+  }
+
+  const workspace = await getWorkspaceForUser(document, req.user._id);
+
+  if (!workspace) {
+    return next(
+      new ErrorHandler("Workspace not found or you are not a member", 404)
+    );
+  }
+
+  if (!canManageWorkspaceDocuments(workspace, req.user._id)) {
+    return next(
+      new ErrorHandler("You cannot delete this document", 403)
+    );
+  }
+
+  const documentTitle = document.title;
+
+  // Find comments so their related notifications can also be deleted.
+  const comments = await Comment.find({
+    document: document._id
+  }).select("_id");
+
+  const commentIds = comments.map((comment) => comment._id);
+
+  await Comment.deleteMany({ document: document._id });
+  await Suggestion.deleteMany({ document: document._id });
+  await Version.deleteMany({ document: document._id });
+
+  await Notification.deleteMany({
+    $or: [
+      { document: document._id },
+      { comment: { $in: commentIds } }
+    ]
+  });
+
+  // Remove old activity entries before recording the deletion.
+  await Activity.deleteMany({
+    document: document._id
+  });
+
+  await Document.findByIdAndDelete(document._id);
+
+  workspace.documents.pull(document._id);
+  await workspace.save();
+
+  await User.updateMany(
+    { ownedDocuments: document._id },
+    { $pull: { ownedDocuments: document._id } }
+  );
+
+  await logActivity({
+    workspace: workspace._id,
+    user: req.user._id,
+    action: "document_deleted",
+    metadata: {
+      documentTitle,
+      deletedDocumentId: String(document._id)
+    }
+  });
+
+  return res.status(200).json({
+    success: true,
+    message: "Document deleted successfully"
+  });
+});
+
+// ADD COLLABORATOR
+export const addCollaborator = asyncHandler(async (req, res, next) => {
+  const { documentId } = req.params;
+  const { userId, permission } = req.body;
+
+  if (!isValidId(documentId) || !isValidId(userId)) {
+    return next(new ErrorHandler("Invalid document or user ID", 400));
+  }
+
+  if (!["editor", "viewer"].includes(permission)) {
+    return next(
+      new ErrorHandler("Permission must be editor or viewer", 400)
+    );
+  }
+
+  const document = await Document.findById(documentId);
+
+  if (!document) {
+    return next(new ErrorHandler("Document not found", 404));
+  }
+
+  const workspace = await getWorkspaceForUser(document, req.user._id);
+
+  if (!workspace) {
+    return next(
+      new ErrorHandler("Workspace not found or you are not a member", 404)
+    );
+  }
+
+  if (getDocumentAccess(req.user, document, workspace) !== "owner") {
+    return next(
+      new ErrorHandler(
+        "Only the document owner can manage collaborators",
+        403
+      )
+    );
+  }
+
+  const targetIsMember = workspace.members.some(
+    (member) => String(member.user) === String(userId)
+  );
+
+  if (!targetIsMember) {
+    return next(
+      new ErrorHandler("Collaborator must be a workspace member", 400)
+    );
+  }
+
+  if (isDocumentOwner(document, userId)) {
+    return next(
+      new ErrorHandler("Document owner cannot be added as a collaborator", 400)
+    );
+  }
+
+  const member = await User.findById(userId);
+
+  if (!member) {
+    return next(new ErrorHandler("Collaborator not found", 404));
+  }
+
+  const alreadyAdded = document.collaborators.some(
+    (item) => String(item.user) === String(userId)
+  );
+
+  if (alreadyAdded) {
+    return next(new ErrorHandler("User is already a collaborator", 409));
+  }
+
+  document.collaborators.push({
+    user: userId,
+    permission
+  });
+
+  await document.save();
+
+  await logActivity({
+    workspace: workspace._id,
+    user: req.user._id,
+    action: "document_shared",
+    document: document._id,
+    targetUser: userId,
+    metadata: {
+      collaboratorName: member.name,
+      permission
+    }
+  });
+
+  return res.status(200).json({
+    success: true,
+    message: "Collaborator added successfully",
+    document
+  });
+});
+
+// GET COLLABORATORS
+export const getCollaborators = asyncHandler(async (req, res, next) => {
+  const { documentId } = req.params;
+
+  if (!isValidId(documentId)) {
+    return next(new ErrorHandler("Invalid document ID", 400));
+  }
+
+  const document = await Document.findById(documentId);
+
+  if (!document) {
+    return next(new ErrorHandler("Document not found", 404));
+  }
+
+  const workspace = await getWorkspaceForUser(document, req.user._id);
+
+  if (!workspace) {
+    return next(
+      new ErrorHandler("Workspace not found or you are not a member", 404)
+    );
+  }
+
+  if (getDocumentAccess(req.user, document, workspace) === "none") {
+    return next(
+      new ErrorHandler("You do not have access to this document", 403)
+    );
+  }
+
+  await document.populate("collaborators.user", "name email");
+
+  return res.status(200).json({
+    success: true,
+    message: "Collaborators fetched successfully",
+    collaborators: document.collaborators
+  });
+});
+
+// UPDATE COLLABORATOR PERMISSION
+export const updateCollaboratorPermission = asyncHandler(
+  async (req, res, next) => {
+    const { documentId, userId } = req.params;
+    const { permission } = req.body;
+
+    if (!isValidId(documentId) || !isValidId(userId)) {
+      return next(new ErrorHandler("Invalid document or user ID", 400));
     }
 
     if (!["editor", "viewer"].includes(permission)) {
-        return next(new ErrorHandler("Permission must be editor or viewer",400));
+      return next(
+        new ErrorHandler("Permission must be editor or viewer", 400)
+      );
     }
 
-    const document=await Document.findById(documentId);
+    const document = await Document.findById(documentId);
 
-    
-
-    if(!document){
-        return next(new ErrorHandler("document not found",404));
+    if (!document) {
+      return next(new ErrorHandler("Document not found", 404));
     }
 
-    const workspace=await Workspace.findOne({_id:document.workspace, "members.user":user._id});
+    const workspace = await getWorkspaceForUser(document, req.user._id);
 
-    if(!workspace){
-        return next(new ErrorHandler("Workspace not found or you are not the member",404));
+    if (!workspace) {
+      return next(
+        new ErrorHandler("Workspace not found or you are not a member", 404)
+      );
     }
 
-    const access = getDocumentAccess(user, document, workspace);
-
-    if (access !== "owner") {
-        return next(new ErrorHandler("Only owner can manage document permissions",403));
+    if (getDocumentAccess(req.user, document, workspace) !== "owner") {
+      return next(
+        new ErrorHandler(
+          "Only the document owner can manage collaborators",
+          403
+        )
+      );
     }
 
-    const collaborator=document.collaborators.find(collaborator=>collaborator.user.toString()===userId.toString());
+    const collaborator = document.collaborators.find(
+      (item) => String(item.user) === String(userId)
+    );
 
-    if(!collaborator){
-        return next(new ErrorHandler("Collaborator not found",404));
+    if (!collaborator) {
+      return next(new ErrorHandler("Collaborator not found", 404));
     }
 
-    collaborator.permission=permission;
+    const previousPermission = collaborator.permission;
+    collaborator.permission = permission;
 
     await document.save();
 
-    res.status(200).json({
-        success:true,
-        message:"permission of collaborator updated successfully",
-        document
-
-    })
-})
-
-export const removeCollaborator=asyncHandler(async(req,res,next)=>{
-    const user=req.user;
-
-    if(!user){
-        return next(new ErrorHandler("User not found",404));
-    }
-
-    const {documentId,userId}=req.params;
-
-    if(!documentId || !userId){
-        return next(new ErrorHandler("documentId and userId are required",400));
-    }
-
-    const document=await Document.findById(documentId);
-
-    if(!document){
-        return next(new ErrorHandler("Document not found",404));
-    }
-
-    const workspace=await Workspace.findOne({_id:document.workspace,"members.user":user._id});
-
-    if(!workspace){
-        return next(new ErrorHandler("Workspace not found or you are not a member",404));
-    }
-
-    const access = getDocumentAccess(user, document, workspace);
-
-    if (access !== "owner") {
-        return next(new ErrorHandler("Only owner can manage document permissions",403));
-    }
-
-    if(document.owner.toString()===userId.toString()){
-        return next(new ErrorHandler("Document owner cannot be removed remove",400));
-    }
-
-    const collaborator=document.collaborators.find(collaborator => collaborator.user.toString()===userId.toString());
-
-    if(!collaborator){
-        return next(new ErrorHandler("collaborator not found",404));
-    }
-
-    document.collaborators.pull(userId);
-
-    await document.save();
-
-    res.status(200).json({
-        success: true,
-        message: "Collaborator removed successfully",
-        document
+    await logActivity({
+      workspace: workspace._id,
+      user: req.user._id,
+      action: "document_shared",
+      document: document._id,
+      targetUser: userId,
+      metadata: {
+        event: "collaborator_permission_updated",
+        previousPermission,
+        newPermission: permission
+      }
     });
 
+    return res.status(200).json({
+      success: true,
+      message: "Collaborator permission updated successfully",
+      document
+    });
+  }
+);
 
+// REMOVE COLLABORATOR
+export const removeCollaborator = asyncHandler(async (req, res, next) => {
+  const { documentId, userId } = req.params;
 
+  if (!isValidId(documentId) || !isValidId(userId)) {
+    return next(new ErrorHandler("Invalid document or user ID", 400));
+  }
 
-})
+  const document = await Document.findById(documentId);
+
+  if (!document) {
+    return next(new ErrorHandler("Document not found", 404));
+  }
+
+  const workspace = await getWorkspaceForUser(document, req.user._id);
+
+  if (!workspace) {
+    return next(
+      new ErrorHandler("Workspace not found or you are not a member", 404)
+    );
+  }
+
+  if (getDocumentAccess(req.user, document, workspace) !== "owner") {
+    return next(
+      new ErrorHandler(
+        "Only the document owner can manage collaborators",
+        403
+      )
+    );
+  }
+
+  if (isDocumentOwner(document, userId)) {
+    return next(
+      new ErrorHandler("Document owner cannot be removed", 400)
+    );
+  }
+
+  const collaborator = document.collaborators.find(
+    (item) => String(item.user) === String(userId)
+  );
+
+  if (!collaborator) {
+    return next(new ErrorHandler("Collaborator not found", 404));
+  }
+
+  const removedPermission = collaborator.permission;
+
+  document.collaborators.pull({ user: userId });
+  await document.save();
+
+  await logActivity({
+    workspace: workspace._id,
+    user: req.user._id,
+    action: "document_collaborator_removed",
+    document: document._id,
+    targetUser: userId,
+    metadata: { removedPermission }
+  });
+
+  return res.status(200).json({
+    success: true,
+    message: "Collaborator removed successfully",
+    document
+  });
+});

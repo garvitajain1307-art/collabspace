@@ -15,11 +15,10 @@ const app=express();
 
 //middleware ko app.use() ke andr likhte hai
 app.use(cors({
-    origin: process.env.FRONTEND_URL,
+    origin: ["http://localhost:5173", "http://localhost:5174"],
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     credentials: true
 }));
-
 
 
 app.use(cookieParser());

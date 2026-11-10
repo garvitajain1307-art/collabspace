@@ -1,3 +1,4 @@
+
 import mongoose from "mongoose";
 
 const workspaceInvitationSchema = new mongoose.Schema(
@@ -23,8 +24,9 @@ const workspaceInvitationSchema = new mongoose.Schema(
 
         role: {
             type: String,
-            enum: ["admin", "member"],
-            default: "member"
+            enum: ["editor", "viewer"],
+            default: "viewer",
+            required: true
         },
 
         token: {
@@ -48,6 +50,12 @@ const workspaceInvitationSchema = new mongoose.Schema(
         timestamps: true
     }
 );
+
+workspaceInvitationSchema.index({
+    workspace: 1,
+    email: 1,
+    status: 1
+});
 
 const WorkspaceInvitation = mongoose.model(
     "WorkspaceInvitation",

@@ -1,3 +1,4 @@
+
 import mongoose from "mongoose";
 
 const documentSchema = new mongoose.Schema(
@@ -8,8 +9,6 @@ const documentSchema = new mongoose.Schema(
       trim: true,
       maxlength: [100, "Length cannot exceed 100 characters"],
     },
-
-    //Mixed lets us store structured Yjs/editor-related data without forcing a rigid MongoDB structure right now.
 
     content: {
       type: mongoose.Schema.Types.Mixed,
@@ -51,7 +50,8 @@ const documentSchema = new mongoose.Schema(
         permission: {
           type: String,
           enum: ["editor", "viewer"],
-          default: "read",
+          default: "viewer",
+          required: true,
         },
 
         addedAt: {
@@ -66,7 +66,6 @@ const documentSchema = new mongoose.Schema(
       ref: "Version",
       default: null,
     },
-    
   },
   {
     timestamps: true,

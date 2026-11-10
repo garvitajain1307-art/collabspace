@@ -1,37 +1,70 @@
-class ErrorHandler extends Error{
-    constructor(message,statusCode){
+
+class ErrorHandler extends Error {
+    constructor(message, statusCode) {
         super(message);
-        this.statusCode=statusCode;
+        this.statusCode = statusCode;
+        this.name = "ErrorHandler";
+
+        Error.captureStackTrace?.(this, this.constructor);
     }
 }
 
-export const errorMiddleware=(err,req,res,next)=>{
-    err.statusCode=err.statusCode||500;
-    err.message=err.message||"Internal Server Error";
-
-    if(err.code===11000){
-        const field = Object.keys(err.keyValue)[0];
-        err = new ErrorHandler(`Duplicate ${field} entered`, 400);
+export const errorMiddleware = (err, req, res, next) => {
+    if (res.headersSent) {
+        return next(err);
     }
-    if(err.name==="CastError"){
-        
-        err=new ErrorHandler(`Resource not found.Invalid ${err.path}`,400);
-    }
-    if(err.name==="JsonWebTokenError"){
-        
-        err=new ErrorHandler("JSON Web Token is Invalid,try again",400);
-    }
-    if(err.name==="TokenExpiredError"){
 
-        err=new ErrorHandler("JSON Web Token is Expired,try again",400);
+    let statusCode = err.statusCode || 500;
+    let message = err.message || "Internal Server Error";
+
+    // MongoDB duplicate key error
+    if (err.code === 11000) {
+        statusCode = 400;
+
+        const field = err.keyValue
+            ? Object.keys(err.keyValue)[0]
+            : "field";
+
+        message = `Duplicate ${field} entered`;
     }
-    const errorMessages=err.errors? Object.values(err.errors).map((value)=>value.message).join(", "):err.message;
-    return res.status(err.statusCode).json({
-        success:false,
-        message:errorMessages
-    })
 
+    // Invalid MongoDB ObjectId
+    else if (err.name === "CastError") {
+        statusCode = 400;
+        message = `Invalid value for ${err.path}`;
+    }
 
-}
+    // Mongoose validation error
+    else if (err.name === "ValidationError") {
+        statusCode = 400;
+
+        message = Object.values(err.errors)
+            .map((error) => error.message)
+            .join(", ");
+    }
+
+    // Invalid or expired JWT
+    else if (
+        err.name === "JsonWebTokenError" ||
+        err.name === "TokenExpiredError"
+    ) {
+        statusCode = 401;
+        message = "Invalid or expired authentication token";
+    }
+
+    // Hide unexpected internal server errors
+    if (statusCode >= 500) {
+        message = "Internal Server Error";
+
+        if (process.env.NODE_ENV !== "production") {
+            console.error(err);
+        }
+    }
+
+    return res.status(statusCode).json({
+        success: false,
+        message
+    });
+};
 
 export default ErrorHandler;

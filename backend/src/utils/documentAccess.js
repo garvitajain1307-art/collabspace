@@ -1,16 +1,44 @@
-export const getDocumentAccess=(user,document,workspace)=>{
-    if(workspace.owner.toString()===user._id.toString()){
+
+const getId = (value) => {
+    if (!value) return null;
+
+    return String(value._id || value.id || value);
+};
+
+export const getDocumentAccess = (user, document, workspace) => {
+    if (!user || !document || !workspace) {
+        return "none";
+    }
+
+    const userId = getId(user);
+
+    if (!userId) {
+        return "none";
+    }
+
+    // Workspace owner has full access.
+    if (getId(workspace.owner) === userId) {
         return "owner";
     }
 
-    if(document.owner.toString()===user._id.toString()){
+    // Document owner has full access.
+    if (getId(document.owner) === userId) {
         return "owner";
     }
 
-    const collaborator=document.collaborators.find(collaborator=>collaborator.user.toString()===user._id.toString());
-    if(!collaborator){
-        return "none"
+    // Only explicitly added collaborators get document access.
+    const collaborator = (document.collaborators || []).find(
+        (item) => getId(item.user) === userId
+    );
+
+    if (!collaborator) {
+        return "none";
     }
 
-    return collaborator.permission;
+    if (["editor", "viewer"].includes(collaborator.permission)) {
+        return collaborator.permission;
+    }
+
+    // Fail closed for invalid permissions.
+    return "none";
 };

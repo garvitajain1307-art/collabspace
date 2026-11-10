@@ -1,3 +1,4 @@
+
 import mongoose from "mongoose";
 
 const versionSchema = new mongoose.Schema(
@@ -27,6 +28,16 @@ const versionSchema = new mongoose.Schema(
     },
     {
         timestamps: true
+    }
+);
+
+versionSchema.index(
+    {
+        document: 1,
+        versionNumber: 1
+    },
+    {
+        unique: true
     }
 );
 

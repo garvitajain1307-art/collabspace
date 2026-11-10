@@ -1,3 +1,4 @@
+
 import mongoose from "mongoose";
 
 const activitySchema = new mongoose.Schema(
@@ -5,7 +6,8 @@ const activitySchema = new mongoose.Schema(
         workspace: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "Workspace",
-            required: true
+            required: true,
+            index: true
         },
 
         user: {
@@ -18,13 +20,28 @@ const activitySchema = new mongoose.Schema(
             type: String,
             enum: [
                 "workspace_created",
+                "workspace_updated",
+
                 "member_joined",
                 "member_invited",
+                "member_removed",
+                "member_left",
+                "member_role_updated",
+
+                "invitation_cancelled",
+
                 "folder_created",
+                "folder_updated",
+                "folder_deleted",
+
                 "document_created",
                 "document_updated",
+                "document_deleted",
                 "document_shared",
+                "document_collaborator_removed",
+
                 "comment_added",
+
                 "suggestion_created",
                 "suggestion_accepted",
                 "suggestion_rejected"
@@ -59,6 +76,11 @@ const activitySchema = new mongoose.Schema(
         timestamps: true
     }
 );
+
+activitySchema.index({
+    workspace: 1,
+    createdAt: -1
+});
 
 const Activity = mongoose.model("Activity", activitySchema);
 
