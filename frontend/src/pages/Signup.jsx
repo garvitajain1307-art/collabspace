@@ -1,170 +1,207 @@
+import React, { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { Compass, Eye, EyeOff, Lock, Mail, User, AlertCircle, Check } from "lucide-react";
+import { setUser, setLoading, setError, clearError } from "../features/auth/authSlice";
+import api from "../services/api";
+import Button from "../components/common/Button";
+import Input from "../components/common/Input";
 
-import "./Signup.css";
-import {useState} from "react"
-import {useDispatch} from "react-redux"
-import {Link} from "react-router-dom"
-import {useSelector} from "react-redux"
-import {useNavigate} from "react-router-dom"
-import {setLoading,setUser,logoutUser,setError,clearError} from "../features/auth/authSlice"
+export const Signup = () => {
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
 
+  const { loading, error } = useSelector((state) => state.auth);
 
-const Signup = () => {
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+  });
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-    const {loading,error}=useSelector((state)=>state.auth);
+  const handleChange = (e) => {
+    if (error) dispatch(clearError());
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    });
+  };
 
-    const dispatch=useDispatch();
-    const navigate=useNavigate();
+  const validatePasswordRules = (pass) => {
+    return {
+      length: pass.length >= 8,
+      uppercase: /[A-Z]/.test(pass),
+      lowercase: /[a-z]/.test(pass),
+      number: /[0-9]/.test(pass),
+      special: /[!@#$%^&*(),.?":{}|<>/]/.test(pass),
+    };
+  };
 
-    const [signupData,setSignupData]=useState({
-        name:"",
-        email:"",
-        password:"",
-        confirmPassword:""
-    })
+  const rules = validatePasswordRules(formData.password);
 
-    const handleSignupChange=(e)=>{
-        dispatch(clearError());
-        setSignupData({
-            ...signupData,
-            [e.target.name]:e.target.value,
-        })
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (formData.password !== formData.confirmPassword) {
+      dispatch(setError("Passwords do not match"));
+      return;
     }
-    const handleSignupSubmit=async(e)=>{
-        e.preventDefault();
-        try{
-            dispatch(setLoading()) ;
-            const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user/register`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                credentials: "include",
-                body: JSON.stringify(signupData),
-            }); 
-            
-            const data=await res.json();
 
-            console.log(data);
-
-            if (!data.success) {
-                dispatch(setError(data.message || data.errors?.[0] || "Signup failed"));
-                
-                return;
-            }
-
-            setSignupData({
-                name: "",
-                email: "",
-                password: "",
-                confirmPassword: "",
-            });
-
-            dispatch(clearError());
-        
-            navigate("/login");
-            
-        }catch (error) {
-            dispatch(setError("Something went wrong"));
-        }
-
+    if (!rules.length || !rules.uppercase || !rules.lowercase || !rules.number || !rules.special) {
+      dispatch(
+        setError("Password must be at least 8 characters with uppercase, lowercase, number, and special character")
+      );
+      return;
     }
-    return (
-        <div className="signup">
-            <div className="signup-container">
 
-                <div className="brand">
-                    <div className="brand-icon">
-                        <div className="logo-mark">
-                            <span></span>
-                            <span></span>
-                        </div>
-                    </div>
+    dispatch(setLoading(true));
+    try {
+      const res = await api.post("/api/v1/user/register", formData);
+      if (res.success && res.user) {
+        dispatch(setUser(res.user));
+        navigate("/dashboard", { replace: true });
+      }
+    } catch (err) {
+      dispatch(err.message ? setError(err.message) : setError("Registration failed"));
+    }
+  };
 
-                    <h2>CollabSpace</h2>
-                    <p>Bring your team's knowledge together.</p>
-                </div>
-
-                <div className="signup-header">
-                    <h1>Create your account</h1>
-                    <p>Start collaborating with your team.</p>
-                </div>
-
-                {error && <p className="auth-error">{error}</p>}
-
-                <form className="signup-form" onSubmit={handleSignupSubmit}>
-
-                    <div className="form-group">
-                        <label>Full name</label>
-                        <input type="text" name="name" placeholder="Ada Lovelace" value={signupData.name} onChange={handleSignupChange}/>
-                    </div>
-
-                    <div className="form-group"><label>Email address</label>
-                        <input
-                            type="email"
-                            name="email"
-                            placeholder="you@company.com"
-                            value={signupData.email}
-                            onChange={handleSignupChange}
-                        />
-                    </div>
-
-                    <div className="form-group">
-                        <label>Password</label>
-
-                        <input
-                            type="password"
-                            name="password"
-                            placeholder="Create a password"
-                            value={signupData.password}
-                            onChange={handleSignupChange}
-                        />
-
-                        {/* <div className="password-requirements">
-                            <p>○ At least 8 characters</p>
-                            <p>○ One number</p>
-                            <p>○ One special character</p>
-                        </div> */}
-                    </div>
-
-                    <div className="form-group">
-                        <label>Confirm password</label>
-
-                        <input
-                            type="password"
-                            name="confirmPassword"
-                            placeholder="Re-enter your password"
-                            value={signupData.confirmPassword}
-                            onChange={handleSignupChange}
-                        />
-                    </div>
-
-                    <button type="submit">
-                        Create account
-                    </button>
-
-                </form>
-
-                <div className="or-divider">
-                    <span>OR</span>
-                </div>
-
-                <button className="google-button" type="button">
-                    <span>G</span>
-                    Continue with Google
-                </button>
-
-                <p className="signin-link">
-                    Already have an account?{" "}
-                    <Link to="/login">Sign in</Link>
-                </p>
-
-                <p className="signup-note">
-                    You can create or join a workspace after signing up.
-                </p>
-
-            </div>
+  return (
+    <div className="min-h-screen w-full flex items-center justify-center p-4 bg-stone-50 selection:bg-violet-100 selection:text-violet-900">
+      <div className="w-full max-w-sm bg-white rounded-2xl border border-stone-200/80 shadow-xl shadow-stone-200/30 p-8">
+        {/* Brand header */}
+        <div className="flex flex-col items-center text-center mb-6">
+          <div className="w-11 h-11 rounded-xl bg-violet-600 flex items-center justify-center text-white shadow-md shadow-violet-500/20 mb-3">
+            <Compass size={24} strokeWidth={2.2} />
+          </div>
+          <h1 className="text-xl font-bold text-stone-900 tracking-tight">
+            Create account
+          </h1>
+          <p className="text-xs text-stone-500 mt-1">
+            Start collaborating with your team on CollabSpace
+          </p>
         </div>
-    );
+
+        {/* Error banner */}
+        {error && (
+          <div className="mb-4 p-3 rounded-lg bg-rose-50 border border-rose-200 flex items-start gap-2 text-xs text-rose-700 animate-in fade-in duration-150">
+            <AlertCircle size={15} className="shrink-0 mt-0.5 text-rose-600" />
+            <span className="leading-snug">{error}</span>
+          </div>
+        )}
+
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="space-y-3.5">
+          <Input
+            autoFocus
+            label="Full name"
+            name="name"
+            value={formData.name}
+            onChange={handleChange}
+            placeholder="Ada Lovelace"
+            required
+            maxLength={30}
+            icon={User}
+          />
+
+          <Input
+            label="Email address"
+            type="email"
+            name="email"
+            value={formData.email}
+            onChange={handleChange}
+            placeholder="you@company.com"
+            required
+            icon={Mail}
+          />
+
+          <div>
+            <Input
+              label="Password"
+              type={showPassword ? "text" : "password"}
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+              placeholder="Create strong password"
+              required
+              icon={Lock}
+              iconRight={
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="text-stone-400 hover:text-stone-600 cursor-pointer p-0.5"
+                >
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              }
+            />
+
+            {/* Live Password Requirements Checklist */}
+            {formData.password.length > 0 && (
+              <div className="mt-2 p-2.5 rounded-lg bg-stone-50 border border-stone-200/60 grid grid-cols-2 gap-1.5 text-[10px]">
+                <span className={`flex items-center gap-1 ${rules.length ? "text-emerald-600 font-semibold" : "text-stone-400"}`}>
+                  <Check size={11} className={rules.length ? "opacity-100" : "opacity-30"} /> 8+ characters
+                </span>
+                <span className={`flex items-center gap-1 ${rules.uppercase ? "text-emerald-600 font-semibold" : "text-stone-400"}`}>
+                  <Check size={11} className={rules.uppercase ? "opacity-100" : "opacity-30"} /> 1 uppercase (A-Z)
+                </span>
+                <span className={`flex items-center gap-1 ${rules.lowercase ? "text-emerald-600 font-semibold" : "text-stone-400"}`}>
+                  <Check size={11} className={rules.lowercase ? "opacity-100" : "opacity-30"} /> 1 lowercase (a-z)
+                </span>
+                <span className={`flex items-center gap-1 ${rules.number && rules.special ? "text-emerald-600 font-semibold" : "text-stone-400"}`}>
+                  <Check size={11} className={rules.number && rules.special ? "opacity-100" : "opacity-30"} /> Number & symbol
+                </span>
+              </div>
+            )}
+          </div>
+
+          <Input
+            label="Confirm password"
+            type={showConfirmPassword ? "text" : "password"}
+            name="confirmPassword"
+            value={formData.confirmPassword}
+            onChange={handleChange}
+            placeholder="Re-enter password"
+            required
+            icon={Lock}
+            iconRight={
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                className="text-stone-400 hover:text-stone-600 cursor-pointer p-0.5"
+              >
+                {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            }
+          />
+
+          <Button
+            type="submit"
+            variant="primary"
+            size="md"
+            className="w-full mt-2"
+            loading={loading}
+          >
+            Create account
+          </Button>
+        </form>
+
+        {/* Footer */}
+        <div className="mt-5 pt-4 border-t border-stone-100 text-center text-xs text-stone-500">
+          Already have an account?{" "}
+          <Link
+            to="/login"
+            className="font-semibold text-violet-600 hover:text-violet-700 transition"
+          >
+            Sign in
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
 };
 
 export default Signup;
