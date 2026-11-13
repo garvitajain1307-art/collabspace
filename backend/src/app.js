@@ -7,6 +7,9 @@ import workspaceRouter from './routes/workspaceRoutes.js'
 import invitationRouter from './routes/invitationRoutes.js'
 import folderRouter from './routes/folderRoutes.js'
 import documentRouter from './routes/documentRoutes.js'
+import commentRouter from "./routes/commentRoutes.js";
+import notificationRouter from "./routes/notificationRoutes.js";
+import activityRouter from "./routes/activityRoutes.js";
 
 import cookieParser from "cookie-parser";
 import { errorMiddleware } from './middlewares/error.js';
@@ -31,6 +34,9 @@ app.use("/api/v1/workspace",workspaceRouter);
 app.use("/api/v1/invitation",invitationRouter);
 app.use("/api/v1/folder",folderRouter);
 app.use("/api/v1/document",documentRouter);
+app.use("/api/v1/comment", commentRouter);
+app.use("/api/v1/notification", notificationRouter);
+app.use("/api/v1/activity", activityRouter);
 
 
 
