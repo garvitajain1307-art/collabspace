@@ -22,7 +22,10 @@ const commentSlice = createSlice({
       state.error = null;
     },
     addComment: (state, action) => {
-      state.comments.push(action.payload);
+      const exists = state.comments.some((c) => c._id === action.payload._id);
+      if (!exists) {
+        state.comments.push(action.payload);
+      }
     },
     updateCommentInList: (state, action) => {
       const updated = action.payload;

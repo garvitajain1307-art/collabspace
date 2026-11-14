@@ -528,6 +528,67 @@ io.on("connection", (socket) => {
         }
     });
 
+    // Real-time comment events
+    socket.on("commentAdded", async (data) => {
+        try {
+            const documentId = data?.documentId || socket.documentId;
+            if (!documentId || !data?.comment) return;
+            await broadcastToAuthorizedUsers(
+                documentId,
+                "commentAdded",
+                { documentId, comment: data.comment },
+                socket.id
+            );
+        } catch (error) {
+            console.log("COMMENT ADDED SOCKET ERROR:", error.message);
+        }
+    });
+
+    socket.on("commentUpdated", async (data) => {
+        try {
+            const documentId = data?.documentId || socket.documentId;
+            if (!documentId || !data?.comment) return;
+            await broadcastToAuthorizedUsers(
+                documentId,
+                "commentUpdated",
+                { documentId, comment: data.comment },
+                socket.id
+            );
+        } catch (error) {
+            console.log("COMMENT UPDATED SOCKET ERROR:", error.message);
+        }
+    });
+
+    socket.on("commentDeleted", async (data) => {
+        try {
+            const documentId = data?.documentId || socket.documentId;
+            if (!documentId || !data?.commentId) return;
+            await broadcastToAuthorizedUsers(
+                documentId,
+                "commentDeleted",
+                { documentId, commentId: data.commentId },
+                socket.id
+            );
+        } catch (error) {
+            console.log("COMMENT DELETED SOCKET ERROR:", error.message);
+        }
+    });
+
+    socket.on("commentResolved", async (data) => {
+        try {
+            const documentId = data?.documentId || socket.documentId;
+            if (!documentId || !data?.comment) return;
+            await broadcastToAuthorizedUsers(
+                documentId,
+                "commentResolved",
+                { documentId, comment: data.comment },
+                socket.id
+            );
+        } catch (error) {
+            console.log("COMMENT RESOLVED SOCKET ERROR:", error.message);
+        }
+    });
+
     // Disconnect cleanup
     socket.on("disconnect", () => {
         console.log("User disconnected:", socket.id);

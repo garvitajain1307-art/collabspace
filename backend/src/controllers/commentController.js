@@ -173,7 +173,10 @@ export const createComment = asyncHandler(async (req, res) => {
     }
   });
 
-  await comment.populate("user", "name email");
+  await comment.populate([
+    { path: "user", select: "name email" },
+    { path: "mentions", select: "name email" }
+  ]);
 
   return res.status(201).json({
     success: true,
@@ -240,7 +243,10 @@ export const updateComment = asyncHandler(async (req, res) => {
   comment.content = content.trim();
   await comment.save();
 
-  await comment.populate("user", "name email");
+  await comment.populate([
+    { path: "user", select: "name email" },
+    { path: "mentions", select: "name email" }
+  ]);
 
   return res.status(200).json({
     success: true,
@@ -322,6 +328,11 @@ export const toggleCommentResolved = asyncHandler(
 
     comment.resolved = resolved;
     await comment.save();
+
+    await comment.populate([
+      { path: "user", select: "name email" },
+      { path: "mentions", select: "name email" }
+    ]);
 
     return res.status(200).json({
       success: true,
