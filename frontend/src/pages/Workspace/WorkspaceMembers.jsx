@@ -19,6 +19,7 @@ import Badge from "../../components/common/Badge";
 import Avatar from "../../components/common/Avatar";
 import Modal from "../../components/common/Modal";
 import Input from "../../components/common/Input";
+import RoleSelector from "../../components/common/RoleSelector";
 import EmptyState from "../../components/common/EmptyState";
 import { useToast } from "../../components/common/Toast";
 import api from "../../services/api";
@@ -268,7 +269,7 @@ export const WorkspaceMembers = () => {
                               setEditRoleMember(m);
                               setNewRole(m.role || "editor");
                             }}
-                            className="p-1 text-stone-400 hover:text-stone-700 hover:bg-stone-100 rounded transition cursor-pointer"
+                            className="p-1.5 text-stone-400 hover:text-violet-600 dark:hover:text-violet-400 hover:bg-violet-50 dark:hover:bg-violet-950/40 rounded transition cursor-pointer"
                             title="Change role"
                           >
                             <Edit size={14} />
@@ -276,7 +277,7 @@ export const WorkspaceMembers = () => {
                           <button
                             type="button"
                             onClick={() => setRemoveMemberTarget(m)}
-                            className="p-1 text-stone-400 hover:text-rose-600 hover:bg-rose-50 rounded transition cursor-pointer"
+                            className="p-1.5 text-stone-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded transition cursor-pointer"
                             title="Remove member"
                           >
                             <Trash2 size={14} />
@@ -309,19 +310,11 @@ export const WorkspaceMembers = () => {
             placeholder="colleague@company.com"
             required
           />
-          <div>
-            <label className="text-xs font-semibold text-stone-700 block mb-1">
-              Role
-            </label>
-            <select
-              value={inviteRole}
-              onChange={(e) => setInviteRole(e.target.value)}
-              className="w-full text-xs rounded-lg border border-stone-300 p-2.5 bg-white text-stone-900 focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-600"
-            >
-              <option value="editor">Editor (Can create & edit folders/docs)</option>
-              <option value="viewer">Viewer (Read-only)</option>
-            </select>
-          </div>
+          <RoleSelector
+            value={inviteRole}
+            onChange={(newRole) => setInviteRole(newRole)}
+            label="Workspace Role"
+          />
           <div className="flex justify-end gap-2 pt-2">
             <Button
               variant="outline"
@@ -351,19 +344,11 @@ export const WorkspaceMembers = () => {
         description={`Update workspace permissions for ${editRoleMember?.user?.name || "Member"}.`}
       >
         <form onSubmit={handleUpdateRole} className="space-y-4">
-          <div>
-            <label className="text-xs font-semibold text-stone-700 block mb-1">
-              Role
-            </label>
-            <select
-              value={newRole}
-              onChange={(e) => setNewRole(e.target.value)}
-              className="w-full text-xs rounded-lg border border-stone-300 p-2.5 bg-white text-stone-900 focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-600"
-            >
-              <option value="editor">Editor (Can create & edit)</option>
-              <option value="viewer">Viewer (Read-only)</option>
-            </select>
-          </div>
+          <RoleSelector
+            value={newRole}
+            onChange={(role) => setNewRole(role)}
+            label="Workspace Role"
+          />
           <div className="flex justify-end gap-2 pt-2">
             <Button
               variant="outline"

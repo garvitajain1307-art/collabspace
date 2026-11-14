@@ -190,9 +190,43 @@ export const ActivityHistoryPage = () => {
                   </h3>
                   <div className="rounded-xl border border-stone-200/80 bg-white p-4 shadow-2xs divide-y divide-stone-100 space-y-3">
                     {items.map((act) => {
-                      const actionLabel = act.action
-                        ?.replace(/_/g, " ")
-                        .replace(/\b\w/g, (c) => c.toUpperCase());
+                      // Format activity action into clean, readable text
+                      let actionDescription = "";
+                      if (act.action === "comment_added") {
+                        actionDescription = act.metadata?.isReply
+                          ? "replied to a comment on"
+                          : "commented on";
+                      } else if (act.action === "member_invited") {
+                        actionDescription = "invited";
+                      } else if (act.action === "member_joined") {
+                        actionDescription = "joined the workspace";
+                      } else if (act.action === "member_removed") {
+                        actionDescription = "removed";
+                      } else if (act.action === "member_role_updated") {
+                        actionDescription = "updated permissions for";
+                      } else if (act.action === "document_created") {
+                        actionDescription = "created document";
+                      } else if (act.action === "document_updated") {
+                        actionDescription = "edited document";
+                      } else if (act.action === "document_deleted") {
+                        actionDescription = "deleted document";
+                      } else if (act.action === "document_shared") {
+                        actionDescription = "shared document";
+                      } else if (act.action === "folder_created") {
+                        actionDescription = "created folder";
+                      } else if (act.action === "folder_updated") {
+                        actionDescription = "updated folder";
+                      } else if (act.action === "folder_deleted") {
+                        actionDescription = "deleted folder";
+                      } else if (act.action === "workspace_created") {
+                        actionDescription = "created this workspace";
+                      } else if (act.action === "workspace_updated") {
+                        actionDescription = "updated workspace settings";
+                      } else {
+                        actionDescription = act.action
+                          ?.replace(/_/g, " ")
+                          ?.toLowerCase();
+                      }
 
                       return (
                         <div
@@ -206,39 +240,39 @@ export const ActivityHistoryPage = () => {
                               size="sm"
                             />
                             <div className="min-w-0">
-                              <p className="text-stone-800 leading-snug">
-                                <strong className="font-semibold text-stone-900">
+                              <p className="text-stone-800 dark:text-stone-200 leading-snug">
+                                <strong className="font-semibold text-stone-900 dark:text-stone-100">
                                   {act.user?.name || "Member"}
                                 </strong>{" "}
-                                <span className="text-stone-600">
-                                  {actionLabel?.toLowerCase()}
+                                <span className="text-stone-600 dark:text-stone-400">
+                                  {actionDescription}
                                 </span>
                                 {act.document && (
                                   <Link
                                     to={`/collaboration/${act.document._id || act.document}`}
-                                    className="ml-1 inline-flex items-center gap-1 font-semibold text-violet-700 bg-violet-50 px-1.5 py-0.2 rounded hover:underline"
+                                    className="ml-1 inline-flex items-center gap-1 font-semibold text-violet-700 dark:text-violet-400 bg-violet-50 dark:bg-violet-950/40 px-1.5 py-0.2 rounded hover:underline border border-violet-200/60 dark:border-violet-800/40"
                                   >
                                     <FileText size={11} />
                                     {act.document.title || "Document"}
                                   </Link>
                                 )}
                                 {act.folder && (
-                                  <span className="ml-1 inline-flex items-center gap-1 font-semibold text-amber-800 bg-amber-50 px-1.5 py-0.2 rounded">
+                                  <span className="ml-1 inline-flex items-center gap-1 font-semibold text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 px-1.5 py-0.2 rounded border border-amber-200/60 dark:border-amber-800/40">
                                     <Folder size={11} />
                                     {act.folder.name || "Folder"}
                                   </span>
                                 )}
                                 {act.targetUser && (
-                                  <span className="ml-1 font-semibold text-stone-700">
+                                  <span className="ml-1 font-semibold text-stone-700 dark:text-stone-300">
                                     {act.targetUser.name || "target user"}
                                   </span>
                                 )}
                               </p>
 
-                              {/* Comment excerpt bubble if comment_added */}
-                              {act.metadata?.commentId && (
-                                <div className="mt-1.5 p-2 rounded-lg bg-stone-50 border border-stone-200/60 text-stone-600 italic text-[11px]">
-                                  Discussion thread update
+                              {/* Only render comment text snippet if backend activity has meaningful text (no generic label) */}
+                              {act.metadata?.commentText && (
+                                <div className="mt-1.5 p-2 rounded-lg bg-stone-50 dark:bg-stone-800/60 border border-stone-200/60 dark:border-stone-700/60 text-stone-600 dark:text-stone-400 italic text-[11px] max-w-md truncate">
+                                  “{act.metadata.commentText}”
                                 </div>
                               )}
                             </div>

@@ -576,14 +576,31 @@ export const Dashboard = () => {
               <div className="rounded-xl border border-stone-200/80 bg-white p-4 shadow-2xs space-y-3">
                 {recentActivities.length > 0 ? (
                   recentActivities.slice(0, 5).map((act) => {
-                    const actionLabel = act.action
-                      ?.replace(/_/g, " ")
-                      .replace(/\b\w/g, (c) => c.toUpperCase());
+                    let actionDescription = "";
+                    if (act.action === "comment_added") {
+                      actionDescription = act.metadata?.isReply
+                        ? "replied to comment on"
+                        : "commented on";
+                    } else if (act.action === "member_invited") {
+                      actionDescription = "invited a member";
+                    } else if (act.action === "member_joined") {
+                      actionDescription = "joined workspace";
+                    } else if (act.action === "document_created") {
+                      actionDescription = "created";
+                    } else if (act.action === "document_updated") {
+                      actionDescription = "edited";
+                    } else if (act.action === "folder_created") {
+                      actionDescription = "created";
+                    } else {
+                      actionDescription = act.action
+                        ?.replace(/_/g, " ")
+                        ?.toLowerCase();
+                    }
 
                     return (
                       <div
                         key={act._id}
-                        className="flex items-start gap-2.5 text-xs pb-3 border-b border-stone-100 last:border-0 last:pb-0"
+                        className="flex items-start gap-2.5 text-xs pb-3 border-b border-stone-100 dark:border-stone-800 last:border-0 last:pb-0"
                       >
                         <Avatar
                           name={act.user?.name || "User"}
@@ -591,19 +608,21 @@ export const Dashboard = () => {
                           size="xs"
                         />
                         <div className="flex-1 min-w-0">
-                          <p className="text-stone-800 leading-snug">
-                            <strong className="font-semibold text-stone-900">
+                          <p className="text-stone-800 dark:text-stone-200 leading-snug">
+                            <strong className="font-semibold text-stone-900 dark:text-stone-100">
                               {act.user?.name || "Member"}
                             </strong>{" "}
-                            {actionLabel?.toLowerCase()}
+                            <span className="text-stone-600 dark:text-stone-400">
+                              {actionDescription}
+                            </span>
                             {act.document?.title && (
-                              <span className="text-violet-600 font-medium">
+                              <span className="text-violet-600 dark:text-violet-400 font-medium">
                                 {" "}
                                 “{act.document.title}”
                               </span>
                             )}
                             {act.folder?.name && (
-                              <span className="text-amber-700 font-medium">
+                              <span className="text-amber-700 dark:text-amber-400 font-medium">
                                 {" "}
                                 folder “{act.folder.name}”
                               </span>

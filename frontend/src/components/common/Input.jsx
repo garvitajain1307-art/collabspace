@@ -22,12 +22,12 @@ export const Input = React.forwardRef(
         {label && (
           <label
             htmlFor={inputId}
-            className="text-xs font-semibold text-stone-700 flex items-center justify-between"
+            className="text-xs font-semibold text-stone-700 dark:text-stone-300 flex items-center justify-between"
           >
             <span>
               {label} {required && <span className="text-rose-500">*</span>}
             </span>
-            {hint && <span className="text-stone-400 font-normal">{hint}</span>}
+            {hint && <span className="text-stone-400 dark:text-stone-500 font-normal">{hint}</span>}
           </label>
         )}
         <div className="relative flex items-center">
@@ -40,12 +40,12 @@ export const Input = React.forwardRef(
             ref={ref}
             id={inputId}
             required={required}
-            className={`w-full rounded-lg border bg-white text-stone-900 text-sm placeholder-stone-400 px-3 py-2 transition duration-150 focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-600 ${
+            className={`w-full rounded-lg border bg-white dark:bg-stone-900 text-stone-900 dark:text-stone-100 text-sm placeholder-stone-400 dark:placeholder-stone-500 px-3 py-2 transition duration-150 focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-600 ${
               Icon ? "pl-9" : ""
             } ${IconRight ? "pr-9" : ""} ${
               error
                 ? "border-rose-400 focus:border-rose-500 focus:ring-rose-500/20"
-                : "border-stone-300 hover:border-stone-400"
+                : "border-stone-300 dark:border-stone-700 hover:border-stone-400 dark:hover:border-stone-600"
             } ${className}`}
             {...props}
           />

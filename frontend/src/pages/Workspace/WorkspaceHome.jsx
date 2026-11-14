@@ -26,6 +26,7 @@ import Badge from "../../components/common/Badge";
 import Avatar, { getColorForString } from "../../components/common/Avatar";
 import Modal from "../../components/common/Modal";
 import Input from "../../components/common/Input";
+import RoleSelector from "../../components/common/RoleSelector";
 import EmptyState from "../../components/common/EmptyState";
 import { useToast } from "../../components/common/Toast";
 import api from "../../services/api";
@@ -648,19 +649,11 @@ export const WorkspaceHome = () => {
             placeholder="colleague@company.com"
             required
           />
-          <div>
-            <label className="text-xs font-semibold text-stone-700 block mb-1">
-              Workspace Role
-            </label>
-            <select
-              value={inviteRole}
-              onChange={(e) => setInviteRole(e.target.value)}
-              className="w-full text-xs rounded-lg border border-stone-300 p-2.5 bg-white text-stone-900 focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-600"
-            >
-              <option value="editor">Editor (can create and edit folders/docs)</option>
-              <option value="viewer">Viewer (read-only workspace access)</option>
-            </select>
-          </div>
+          <RoleSelector
+            value={inviteRole}
+            onChange={(newRole) => setInviteRole(newRole)}
+            label="Workspace Role"
+          />
           <div className="flex justify-end gap-2 pt-2">
             <Button
               variant="outline"

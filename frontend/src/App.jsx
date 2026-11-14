@@ -6,6 +6,7 @@ import { setUser } from './features/auth/authSlice';
 import { setNotificationsData } from './features/notification/notificationSlice';
 import { setMyInvitations } from './features/invitation/invitationSlice';
 import { ToastProvider } from './components/common/Toast';
+import { ThemeProvider } from './context/ThemeContext';
 import ProtectedRoute from './routes/ProtectedRoute';
 import api from './services/api';
 
@@ -63,25 +64,27 @@ function App() {
   }
 
   return (
-    <ToastProvider>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Navigate to={isAuthenticated ? "/dashboard" : "/login"} replace />} />
-          <Route path="/login" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Login />} />
-          <Route path="/signup" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Signup />} />
-          <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-          <Route path="/workspaces" element={<ProtectedRoute><WorkspacesPage /></ProtectedRoute>} />
-          <Route path="/workspace/:workspaceId" element={<ProtectedRoute><WorkspaceHome /></ProtectedRoute>} />
-          <Route path="/workspace/:workspaceId/members" element={<ProtectedRoute><WorkspaceMembers /></ProtectedRoute>} />
-          <Route path="/workspace/:workspaceId/activity" element={<ProtectedRoute><ActivityHistoryPage /></ProtectedRoute>} />
-          <Route path="/collaboration/:documentId" element={<ProtectedRoute><CollaborationPage /></ProtectedRoute>} />
-          <Route path="/invitations" element={<ProtectedRoute><InvitationsPage /></ProtectedRoute>} />
-          <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
-          <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </BrowserRouter>
-    </ToastProvider>
+    <ThemeProvider>
+      <ToastProvider>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Navigate to={isAuthenticated ? "/dashboard" : "/login"} replace />} />
+            <Route path="/login" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Login />} />
+            <Route path="/signup" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Signup />} />
+            <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+            <Route path="/workspaces" element={<ProtectedRoute><WorkspacesPage /></ProtectedRoute>} />
+            <Route path="/workspace/:workspaceId" element={<ProtectedRoute><WorkspaceHome /></ProtectedRoute>} />
+            <Route path="/workspace/:workspaceId/members" element={<ProtectedRoute><WorkspaceMembers /></ProtectedRoute>} />
+            <Route path="/workspace/:workspaceId/activity" element={<ProtectedRoute><ActivityHistoryPage /></ProtectedRoute>} />
+            <Route path="/collaboration/:documentId" element={<ProtectedRoute><CollaborationPage /></ProtectedRoute>} />
+            <Route path="/invitations" element={<ProtectedRoute><InvitationsPage /></ProtectedRoute>} />
+            <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
+            <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </BrowserRouter>
+      </ToastProvider>
+    </ThemeProvider>
   );
 }
 

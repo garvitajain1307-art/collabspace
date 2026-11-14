@@ -10,9 +10,12 @@ import {
   Settings,
   LogOut,
   ExternalLink,
+  Sun,
+  Moon,
 } from "lucide-react";
 import Avatar from "../common/Avatar";
 import { markAsReadInState, markAllAsReadInState } from "../../features/notification/notificationSlice";
+import { useTheme } from "../../context/ThemeContext";
 import api from "../../services/api";
 
 export const Topbar = ({
@@ -24,6 +27,7 @@ export const Topbar = ({
 }) => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const { theme, toggleTheme, isDark } = useTheme();
 
   const { user } = useSelector((state) => state.auth);
   const { notifications, unreadCount } = useSelector((state) => state.notification);
@@ -68,23 +72,23 @@ export const Topbar = ({
   };
 
   return (
-    <header className="h-14 bg-white/80 backdrop-blur-xs border-b border-stone-200 px-6 flex items-center justify-between shrink-0 sticky top-0 z-20">
+    <header className="h-14 bg-white/80 dark:bg-stone-900/80 backdrop-blur-xs border-b border-stone-200 dark:border-stone-800 px-6 flex items-center justify-between shrink-0 sticky top-0 z-20">
       {/* Left: Breadcrumbs / Title */}
       <div className="flex items-center gap-2">
         {breadcrumbs.length > 0 ? (
-          <nav className="flex items-center gap-1.5 text-xs text-stone-500 font-medium">
+          <nav className="flex items-center gap-1.5 text-xs text-stone-500 dark:text-stone-400 font-medium">
             {breadcrumbs.map((crumb, idx) => (
               <React.Fragment key={idx}>
-                {idx > 0 && <span className="text-stone-300">/</span>}
+                {idx > 0 && <span className="text-stone-300 dark:text-stone-600">/</span>}
                 {crumb.path ? (
                   <Link
                     to={crumb.path}
-                    className="hover:text-stone-900 transition-colors"
+                    className="hover:text-stone-900 dark:hover:text-stone-100 transition-colors"
                   >
                     {crumb.label}
                   </Link>
                 ) : (
-                  <span className="text-stone-900 font-semibold truncate max-w-[200px]">
+                  <span className="text-stone-900 dark:text-stone-100 font-semibold truncate max-w-[200px]">
                     {crumb.label}
                   </span>
                 )}
@@ -92,7 +96,7 @@ export const Topbar = ({
             ))}
           </nav>
         ) : (
-          <h1 className="text-base font-semibold text-stone-900 tracking-tight">
+          <h1 className="text-base font-semibold text-stone-900 dark:text-stone-100 tracking-tight">
             {title}
           </h1>
         )}
@@ -138,11 +142,11 @@ export const Topbar = ({
             <div className="absolute right-0 mt-2 w-80 md:w-96 bg-white rounded-xl shadow-xl border border-stone-200 p-0 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-150">
               <div className="p-3.5 border-b border-stone-100 flex items-center justify-between bg-stone-50/50">
                 <div className="flex items-center gap-2">
-                  <h4 className="text-xs font-bold text-stone-900 uppercase tracking-wide">
+                  <h4 className="text-xs font-bold text-stone-900 dark:text-stone-100 uppercase tracking-wide">
                     Notifications
                   </h4>
                   {unreadCount > 0 && (
-                    <span className="text-[10px] bg-violet-100 text-violet-700 font-bold px-1.5 py-0.5 rounded-full">
+                    <span className="text-[10px] bg-violet-100 dark:bg-violet-950/70 text-violet-700 dark:text-violet-300 font-bold px-1.5 py-0.5 rounded-full">
                       {unreadCount} unread
                     </span>
                   )}
@@ -150,7 +154,7 @@ export const Topbar = ({
                 {unreadCount > 0 && (
                   <button
                     onClick={handleMarkAllAsRead}
-                    className="text-[11px] text-violet-600 hover:text-violet-700 font-semibold flex items-center gap-1 cursor-pointer"
+                    className="text-[11px] text-violet-600 dark:text-violet-400 hover:text-violet-700 font-semibold flex items-center gap-1 cursor-pointer"
                   >
                     <CheckCheck size={13} />
                     Mark all read
@@ -158,7 +162,7 @@ export const Topbar = ({
                 )}
               </div>
 
-              <div className="max-h-80 overflow-y-auto divide-y divide-stone-100">
+              <div className="max-h-80 overflow-y-auto divide-y divide-stone-100 dark:divide-stone-800">
                 {notifications?.slice(0, 5).map((notif) => (
                   <div
                     key={notif._id}
@@ -172,8 +176,8 @@ export const Topbar = ({
                         navigate("/notifications");
                       }
                     }}
-                    className={`p-3 flex items-start gap-2.5 hover:bg-stone-50 transition cursor-pointer ${
-                      !notif.read ? "bg-violet-50/30" : ""
+                    className={`p-3 flex items-start gap-2.5 hover:bg-stone-50 dark:hover:bg-stone-800 transition cursor-pointer ${
+                      !notif.read ? "bg-violet-50/30 dark:bg-violet-950/20" : ""
                     }`}
                   >
                     <Avatar
@@ -182,10 +186,10 @@ export const Topbar = ({
                       size="sm"
                     />
                     <div className="flex-1 text-left">
-                      <p className="text-xs font-medium text-stone-800 leading-snug">
+                      <p className="text-xs font-medium text-stone-800 dark:text-stone-200 leading-snug">
                         {notif.message}
                       </p>
-                      <span className="text-[10px] text-stone-400 mt-0.5 flex items-center gap-1">
+                      <span className="text-[10px] text-stone-400 dark:text-stone-500 mt-0.5 flex items-center gap-1">
                         <Clock size={10} />
                         {new Date(notif.createdAt).toLocaleDateString()}
                       </span>
@@ -193,7 +197,7 @@ export const Topbar = ({
                     {!notif.read && (
                       <button
                         onClick={(e) => handleMarkAsRead(notif._id, e)}
-                        className="p-1 text-stone-400 hover:text-violet-600 rounded cursor-pointer"
+                        className="p-1 text-stone-400 hover:text-violet-600 dark:hover:text-violet-400 rounded cursor-pointer"
                         title="Mark as read"
                       >
                         <Check size={13} />
@@ -209,11 +213,11 @@ export const Topbar = ({
                 )}
               </div>
 
-              <div className="p-2 border-t border-stone-100 bg-stone-50/50 text-center">
+              <div className="p-2 border-t border-stone-100 dark:border-stone-800 bg-stone-50/50 dark:bg-stone-900/50 text-center">
                 <Link
                   to="/notifications"
                   onClick={() => setNotificationOpen(false)}
-                  className="text-xs text-violet-600 hover:text-violet-700 font-semibold flex items-center justify-center gap-1"
+                  className="text-xs text-violet-600 dark:text-violet-400 hover:text-violet-700 font-semibold flex items-center justify-center gap-1"
                 >
                   View all notifications <ExternalLink size={12} />
                 </Link>
@@ -223,18 +227,18 @@ export const Topbar = ({
         </div>
 
         {/* Divider */}
-        <div className="h-5 w-px bg-stone-200" />
+        <div className="h-5 w-px bg-stone-200 dark:bg-stone-800" />
 
         {/* Profile Avatar & Dropdown */}
         <div className="relative" ref={profileRef}>
           <button
             type="button"
             onClick={() => setProfileOpen(!profileOpen)}
-            className="flex items-center gap-2.5 p-1 rounded-lg hover:bg-stone-100 transition duration-150 cursor-pointer"
+            className="flex items-center gap-2.5 p-1 rounded-lg hover:bg-stone-100 dark:hover:bg-stone-800 transition duration-150 cursor-pointer"
           >
             <Avatar name={user?.name || "User"} size="sm" />
             <div className="hidden md:flex flex-col text-left">
-              <span className="text-xs font-semibold text-stone-900 leading-tight">
+              <span className="text-xs font-semibold text-stone-900 dark:text-stone-100 leading-tight">
                 {user?.name}
               </span>
               <span className="text-[10px] text-stone-400 leading-tight">
@@ -244,19 +248,38 @@ export const Topbar = ({
           </button>
 
           {profileOpen && (
-            <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-stone-200 p-1.5 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
-              <div className="px-3 py-2 border-b border-stone-100 mb-1">
-                <p className="text-xs font-bold text-stone-900 truncate">{user?.name}</p>
+            <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-stone-900 rounded-xl shadow-xl border border-stone-200 dark:border-stone-800 p-1.5 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
+              <div className="px-3 py-2 border-b border-stone-100 dark:border-stone-800 mb-1">
+                <p className="text-xs font-bold text-stone-900 dark:text-stone-100 truncate">{user?.name}</p>
                 <p className="text-[10px] text-stone-400 truncate">{user?.email}</p>
               </div>
               <Link
                 to="/settings"
                 onClick={() => setProfileOpen(false)}
-                className="flex items-center gap-2 px-3 py-2 text-xs font-medium text-stone-700 hover:bg-stone-100 rounded-lg transition"
+                className="flex items-center gap-2 px-3 py-2 text-xs font-medium text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-lg transition"
               >
                 <Settings size={14} className="text-stone-400" />
                 Settings
               </Link>
+              <button
+                type="button"
+                onClick={() => {
+                  toggleTheme();
+                }}
+                className="w-full flex items-center justify-between px-3 py-2 text-xs font-medium text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-lg transition cursor-pointer"
+              >
+                <div className="flex items-center gap-2">
+                  {isDark ? (
+                    <Sun size={14} className="text-amber-500" />
+                  ) : (
+                    <Moon size={14} className="text-violet-500" />
+                  )}
+                  <span>{isDark ? "Light theme" : "Dark theme"}</span>
+                </div>
+                <span className="text-[10px] px-1.5 py-0.2 rounded font-semibold bg-stone-100 dark:bg-stone-800 text-stone-500 dark:text-stone-400">
+                  {isDark ? "Dark" : "Light"}
+                </span>
+              </button>
               <button
                 type="button"
                 onClick={async () => {

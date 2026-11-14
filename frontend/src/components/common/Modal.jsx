@@ -29,29 +29,29 @@ export const Modal = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/40 backdrop-blur-xs animate-in fade-in duration-150"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-950/60 backdrop-blur-xs animate-in fade-in duration-150"
       onClick={onClose}
     >
       <div
-        className={`w-full ${maxWidth} bg-white rounded-xl shadow-xl border border-stone-200 overflow-hidden transform transition-all animate-in zoom-in-95 duration-150`}
+        className={`w-full ${maxWidth} bg-white dark:bg-stone-900 rounded-xl shadow-xl border border-stone-200 dark:border-stone-800 transform transition-all animate-in zoom-in-95 duration-150`}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between px-5 py-4 border-b border-stone-100">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-stone-100 dark:border-stone-800">
           <div>
-            <h3 className="text-base font-semibold text-stone-900">{title}</h3>
+            <h3 className="text-base font-semibold text-stone-900 dark:text-stone-100">{title}</h3>
             {description && (
-              <p className="text-xs text-stone-500 mt-0.5">{description}</p>
+              <p className="text-xs text-stone-500 dark:text-stone-400 mt-0.5">{description}</p>
             )}
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="p-1 text-stone-400 hover:text-stone-600 rounded-lg hover:bg-stone-100 transition duration-150 cursor-pointer"
+            className="p-1 text-stone-400 hover:text-stone-600 dark:hover:text-stone-200 rounded-lg hover:bg-stone-100 dark:hover:bg-stone-800 transition duration-150 cursor-pointer"
           >
             <X size={18} />
           </button>
         </div>
-        <div className="p-5">{children}</div>
+        <div className="p-5 text-stone-900 dark:text-stone-100">{children}</div>
       </div>
     </div>
   );

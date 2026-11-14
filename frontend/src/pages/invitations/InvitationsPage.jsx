@@ -219,15 +219,16 @@ export const InvitationsPage = () => {
 
                       <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
                         <Button
-                          variant="outline"
+                          variant="dangerOutline"
                           size="sm"
+                          icon={X}
                           disabled={isBusy}
                           onClick={() => handleReject(inv._id)}
                         >
                           Decline
                         </Button>
                         <Button
-                          variant="primary"
+                          variant="success"
                           size="sm"
                           icon={Check}
                           loading={isBusy}
@@ -288,8 +289,9 @@ export const InvitationsPage = () => {
 
                       {inv.status === "pending" && (
                         <Button
-                          variant="outline"
+                          variant="dangerOutline"
                           size="sm"
+                          icon={X}
                           loading={isBusy}
                           onClick={() => handleCancelSent(inv._id)}
                         >

@@ -293,17 +293,26 @@ export const WorkspaceExplorer = ({
           navigate(`/collaboration/${doc._id}`);
         }}
         onContextMenu={(e) => handleContextMenu(e, "document", doc)}
-        className={`flex items-center justify-between group px-2 py-1.5 rounded-lg text-xs transition-colors cursor-pointer select-none ${
+        className={`relative flex items-center justify-between group px-2.5 py-1.5 rounded-lg text-xs transition-colors cursor-pointer select-none ${
           isSelected
-            ? "bg-violet-600 text-white font-medium shadow-2xs"
-            : "hover:bg-stone-100 text-stone-600 hover:text-stone-900"
+            ? "bg-violet-50/90 dark:bg-violet-950/40 text-violet-950 dark:text-violet-200 font-semibold border border-violet-200/70 dark:border-violet-800/50 shadow-2xs"
+            : "hover:bg-stone-100/80 dark:hover:bg-stone-800/60 text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-200 border border-transparent"
         }`}
         style={{ paddingLeft: `${depth * 14 + 22}px` }}
       >
+        {/* Subtle slim accent indicator on the left for selected item */}
+        {isSelected && (
+          <span className="absolute left-1 top-1.5 bottom-1.5 w-0.5 rounded-full bg-violet-600 dark:bg-violet-400" />
+        )}
+
         <div className="flex items-center gap-2 min-w-0">
           <FileText
             size={14}
-            className={isSelected ? "text-white shrink-0" : "text-stone-400 shrink-0"}
+            className={
+              isSelected
+                ? "text-violet-600 dark:text-violet-400 shrink-0"
+                : "text-stone-400 dark:text-stone-500 shrink-0"
+            }
           />
           <span className="truncate">{doc.title}</span>
         </div>
@@ -314,8 +323,8 @@ export const WorkspaceExplorer = ({
             onClick={(e) => handleContextMenu(e, "document", doc)}
             className={`opacity-0 group-hover:opacity-100 p-1 rounded cursor-pointer transition ${
               isSelected
-                ? "text-white/80 hover:text-white"
-                : "text-stone-400 hover:text-stone-700"
+                ? "text-violet-600 dark:text-violet-300 hover:bg-violet-100/60 dark:hover:bg-violet-900/60"
+                : "text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 hover:bg-stone-200/60 dark:hover:bg-stone-700/60"
             }`}
           >
             <MoreVertical size={13} />
@@ -328,22 +337,22 @@ export const WorkspaceExplorer = ({
   return (
     <div
       onClick={closeContextMenu}
-      className="w-64 h-screen bg-white border-r border-stone-200 flex flex-col shrink-0 overflow-hidden select-none"
+      className="w-64 h-screen bg-white dark:bg-stone-900 border-r border-stone-200 dark:border-stone-800 flex flex-col shrink-0 overflow-hidden select-none"
     >
       {/* Workspace Header / Dropdown */}
-      <div className="p-3.5 border-b border-stone-100 flex items-center justify-between bg-stone-50/50">
+      <div className="p-3.5 border-b border-stone-100 dark:border-stone-800 flex items-center justify-between bg-stone-50/50 dark:bg-stone-900/50">
         <Link
           to={`/workspace/${workspace?._id}`}
           className="flex items-center gap-2 min-w-0 group"
         >
-          <div className="w-7 h-7 rounded-lg bg-violet-100 text-violet-700 font-bold text-xs flex items-center justify-center shrink-0 border border-violet-200">
+          <div className="w-7 h-7 rounded-lg bg-violet-100 dark:bg-violet-950/70 text-violet-700 dark:text-violet-300 font-bold text-xs flex items-center justify-center shrink-0 border border-violet-200 dark:border-violet-800">
             {workspace?.name?.slice(0, 2).toUpperCase() || "WS"}
           </div>
           <div className="flex flex-col text-left min-w-0">
-            <span className="text-xs font-bold text-stone-900 truncate group-hover:text-violet-600 transition">
+            <span className="text-xs font-bold text-stone-900 dark:text-stone-100 truncate group-hover:text-violet-600 dark:group-hover:text-violet-400 transition">
               {workspace?.name || "Workspace"}
             </span>
-            <span className="text-[10px] text-stone-400 font-medium">
+            <span className="text-[10px] text-stone-400 dark:text-stone-500 font-medium">
               {userRole === "owner" ? "Owner" : userRole === "editor" ? "Editor" : "Viewer"} ·{" "}
               {workspace?.members?.length || 1} members
             </span>
@@ -352,13 +361,13 @@ export const WorkspaceExplorer = ({
       </div>
 
       {/* Workspace Navigation Subtabs */}
-      <div className="px-3 pt-2.5 pb-1 border-b border-stone-100 space-y-0.5">
+      <div className="px-3 pt-2.5 pb-1 border-b border-stone-100 dark:border-stone-800 space-y-0.5">
         <Link
           to={`/workspace/${workspace?._id}`}
           className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium transition ${
             location.pathname === `/workspace/${workspace?._id}`
-              ? "bg-stone-100 text-stone-900 font-semibold"
-              : "text-stone-600 hover:bg-stone-50"
+              ? "bg-stone-100 dark:bg-stone-800 text-stone-900 dark:text-stone-100 font-semibold"
+              : "text-stone-600 dark:text-stone-400 hover:bg-stone-50 dark:hover:bg-stone-800/60 hover:text-stone-900 dark:hover:text-stone-200"
           }`}
         >
           <LayoutDashboard size={14} className="text-stone-400" />
@@ -368,15 +377,15 @@ export const WorkspaceExplorer = ({
           to={`/workspace/${workspace?._id}/members`}
           className={`flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-medium transition ${
             location.pathname === `/workspace/${workspace?._id}/members`
-              ? "bg-stone-100 text-stone-900 font-semibold"
-              : "text-stone-600 hover:bg-stone-50"
+              ? "bg-stone-100 dark:bg-stone-800 text-stone-900 dark:text-stone-100 font-semibold"
+              : "text-stone-600 dark:text-stone-400 hover:bg-stone-50 dark:hover:bg-stone-800/60 hover:text-stone-900 dark:hover:text-stone-200"
           }`}
         >
           <div className="flex items-center gap-2">
             <Users size={14} className="text-stone-400" />
             <span>Members</span>
           </div>
-          <span className="text-[10px] bg-stone-200/70 text-stone-600 px-1.5 py-0.2 rounded font-semibold">
+          <span className="text-[10px] bg-stone-200/70 dark:bg-stone-800 text-stone-600 dark:text-stone-400 px-1.5 py-0.2 rounded font-semibold">
             {workspace?.members?.length || 1}
           </span>
         </Link>
@@ -384,8 +393,8 @@ export const WorkspaceExplorer = ({
           to={`/workspace/${workspace?._id}/activity`}
           className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium transition ${
             location.pathname === `/workspace/${workspace?._id}/activity`
-              ? "bg-stone-100 text-stone-900 font-semibold"
-              : "text-stone-600 hover:bg-stone-50"
+              ? "bg-stone-100 dark:bg-stone-800 text-stone-900 dark:text-stone-100 font-semibold"
+              : "text-stone-600 dark:text-stone-400 hover:bg-stone-50 dark:hover:bg-stone-800/60 hover:text-stone-900 dark:hover:text-stone-200"
           }`}
         >
           <ActivityIcon size={14} className="text-stone-400" />
@@ -394,7 +403,7 @@ export const WorkspaceExplorer = ({
       </div>
 
       {/* Explorer Tree Header */}
-      <div className="px-3 py-2 flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-stone-400 border-b border-stone-100/50">
+      <div className="px-3 py-2 flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-stone-400 border-b border-stone-100/50 dark:border-stone-800/50">
         <span>Explorer</span>
         {canManage && (
           <div className="flex items-center gap-1">
@@ -405,7 +414,7 @@ export const WorkspaceExplorer = ({
                 setFormName("");
                 setModalType("createFolder");
               }}
-              className="p-1 text-stone-400 hover:text-stone-700 hover:bg-stone-100 rounded cursor-pointer"
+              className="p-1 text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 hover:bg-stone-100 dark:hover:bg-stone-800 rounded cursor-pointer"
               title="New folder in root"
             >
               <FolderPlus size={14} />
@@ -417,7 +426,7 @@ export const WorkspaceExplorer = ({
                 setFormName("");
                 setModalType("createDocument");
               }}
-              className="p-1 text-stone-400 hover:text-stone-700 hover:bg-stone-100 rounded cursor-pointer"
+              className="p-1 text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 hover:bg-stone-100 dark:hover:bg-stone-800 rounded cursor-pointer"
               title="New document in root"
             >
               <FilePlus size={14} />
@@ -442,7 +451,7 @@ export const WorkspaceExplorer = ({
       </div>
 
       {/* Bottom Summary Bar */}
-      <div className="px-3 py-2 border-t border-stone-100 text-[10px] text-stone-400 flex items-center justify-between bg-stone-50/50 font-medium">
+      <div className="px-3 py-2 border-t border-stone-100 dark:border-stone-800 text-[10px] text-stone-400 flex items-center justify-between bg-stone-50/50 dark:bg-stone-900/50 font-medium">
         <span>{folders.length} folders</span>
         <span>{documents.length} documents</span>
       </div>
@@ -450,7 +459,7 @@ export const WorkspaceExplorer = ({
       {/* Context Menu Popup */}
       {contextMenu && (
         <div
-          className="fixed bg-white rounded-xl shadow-xl border border-stone-200 p-1 z-50 min-w-44 animate-in fade-in zoom-in-95 duration-100 text-xs"
+          className="fixed bg-white dark:bg-stone-900 rounded-xl shadow-xl border border-stone-200 dark:border-stone-800 p-1 z-50 min-w-44 animate-in fade-in zoom-in-95 duration-100 text-xs"
           style={{ top: `${contextMenu.y}px`, left: `${contextMenu.x}px` }}
         >
           {contextMenu.type === "folder" ? (
@@ -464,7 +473,7 @@ export const WorkspaceExplorer = ({
                       setModalType("createDocument");
                       closeContextMenu();
                     }}
-                    className="w-full flex items-center gap-2 px-2.5 py-1.5 text-stone-700 hover:bg-stone-100 rounded-md transition cursor-pointer text-left"
+                    className="w-full flex items-center gap-2 px-2.5 py-1.5 text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-md transition cursor-pointer text-left"
                   >
                     <FilePlus size={14} className="text-stone-400" />
                     New document inside

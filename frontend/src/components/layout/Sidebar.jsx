@@ -11,6 +11,8 @@ import {
   ChevronUp,
   Plus,
   Compass,
+  Sun,
+  Moon,
 } from "lucide-react";
 import { logoutUser } from "../../features/auth/authSlice";
 import api from "../../services/api";
@@ -18,12 +20,14 @@ import Avatar, { getColorForString } from "../common/Avatar";
 import Modal from "../common/Modal";
 import Button from "../common/Button";
 import { useToast } from "../common/Toast";
+import { useTheme } from "../../context/ThemeContext";
 
 export const Sidebar = ({ isCollapsed = false, onToggleCollapse }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const toast = useToast();
+  const { theme, toggleTheme, isDark } = useTheme();
 
   const { user } = useSelector((state) => state.auth);
   const { workspaces } = useSelector((state) => state.workspace);
@@ -87,24 +91,24 @@ export const Sidebar = ({ isCollapsed = false, onToggleCollapse }) => {
   return (
     <>
       <aside
-        className={`h-screen bg-stone-50/80 border-r border-stone-200 flex flex-col justify-between shrink-0 select-none transition-all duration-200 z-30 ${
+        className={`h-screen bg-stone-50/90 dark:bg-stone-950 border-r border-stone-200 dark:border-stone-850 flex flex-col justify-between shrink-0 select-none transition-all duration-200 z-30 ${
           isCollapsed ? "w-16" : "w-60"
         }`}
       >
         {/* Top: Logo & Nav */}
         <div className="flex flex-col flex-1 overflow-hidden">
           {/* Brand Header */}
-          <div className="h-14 px-4 flex items-center justify-between border-b border-stone-200/60">
+          <div className="h-14 px-4 flex items-center justify-between border-b border-stone-200/60 dark:border-stone-800">
             <Link
               to="/dashboard"
-              className="flex items-center gap-2.5 font-semibold text-stone-900 group"
+              className="flex items-center gap-2.5 font-semibold text-stone-900 dark:text-stone-100 group"
             >
               <div className="w-8 h-8 rounded-lg bg-violet-600 flex items-center justify-center text-white shadow-xs group-hover:bg-violet-700 transition duration-150">
                 <Compass size={18} strokeWidth={2.2} />
               </div>
               {!isCollapsed && (
                 <div className="flex flex-col">
-                  <span className="text-sm font-bold tracking-tight text-stone-900">
+                  <span className="text-sm font-bold tracking-tight text-stone-900 dark:text-stone-100">
                     CollabSpace
                   </span>
                   <span className="text-[10px] text-stone-400 font-normal -mt-0.5">
@@ -130,8 +134,8 @@ export const Sidebar = ({ isCollapsed = false, onToggleCollapse }) => {
                   to={item.path}
                   className={`flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition duration-150 group cursor-pointer ${
                     isActive
-                      ? "bg-violet-50 text-violet-700 font-semibold shadow-2xs"
-                      : "text-stone-600 hover:bg-stone-100 hover:text-stone-900"
+                      ? "bg-violet-50 dark:bg-violet-950/50 text-violet-700 dark:text-violet-300 font-semibold shadow-2xs border border-violet-200/50 dark:border-violet-800/40"
+                      : "text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-900 hover:text-stone-900 dark:hover:text-stone-100"
                   }`}
                   title={isCollapsed ? item.label : undefined}
                 >
@@ -139,7 +143,7 @@ export const Sidebar = ({ isCollapsed = false, onToggleCollapse }) => {
                     <Icon
                       size={17}
                       strokeWidth={isActive ? 2.2 : 1.75}
-                      className={isActive ? "text-violet-600" : "text-stone-400 group-hover:text-stone-600"}
+                      className={isActive ? "text-violet-600 dark:text-violet-400" : "text-stone-400 group-hover:text-stone-600 dark:group-hover:text-stone-300"}
                     />
                     {!isCollapsed && <span>{item.label}</span>}
                   </div>
@@ -148,7 +152,7 @@ export const Sidebar = ({ isCollapsed = false, onToggleCollapse }) => {
                       className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${
                         isActive
                           ? "bg-violet-600 text-white"
-                          : "bg-violet-100 text-violet-700"
+                          : "bg-violet-100 dark:bg-violet-950/70 text-violet-700 dark:text-violet-300"
                       }`}
                     >
                       {item.badge}
@@ -160,12 +164,12 @@ export const Sidebar = ({ isCollapsed = false, onToggleCollapse }) => {
 
             {/* Recent Workspaces section */}
             {!isCollapsed && (
-              <div className="pt-4 mt-2 border-t border-stone-200/60">
+              <div className="pt-4 mt-2 border-t border-stone-200/60 dark:border-stone-800">
                 <div className="px-3 flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-stone-400 mb-2">
                   <span>Workspaces</span>
                   <Link
                     to="/workspaces"
-                    className="hover:text-stone-600 p-0.5 rounded cursor-pointer"
+                    className="hover:text-stone-600 dark:hover:text-stone-300 p-0.5 rounded cursor-pointer"
                     title="View all workspaces"
                   >
                     <Plus size={14} />
@@ -184,8 +188,8 @@ export const Sidebar = ({ isCollapsed = false, onToggleCollapse }) => {
                         to={`/workspace/${ws._id}`}
                         className={`flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-xs transition duration-150 cursor-pointer ${
                           isActive
-                            ? "bg-violet-50 text-violet-900 font-semibold"
-                            : "text-stone-600 hover:bg-stone-100 hover:text-stone-900"
+                            ? "bg-violet-50 dark:bg-violet-950/50 text-violet-900 dark:text-violet-200 font-semibold"
+                            : "text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-900 hover:text-stone-900 dark:hover:text-stone-100"
                         }`}
                       >
                         <span
@@ -209,13 +213,13 @@ export const Sidebar = ({ isCollapsed = false, onToggleCollapse }) => {
         </div>
 
         {/* Bottom: Profile & Logout */}
-        <div className="p-3 border-t border-stone-200/60 bg-stone-50/50 relative">
+        <div className="p-3 border-t border-stone-200/60 dark:border-stone-800 bg-stone-50/50 dark:bg-stone-900/60 relative">
           {profileMenuOpen && (
-            <div className="absolute bottom-16 left-3 right-3 bg-white rounded-xl shadow-lg border border-stone-200 p-1.5 z-40 animate-in fade-in slide-in-from-bottom-2 duration-150">
+            <div className="absolute bottom-16 left-3 right-3 bg-white dark:bg-stone-900 rounded-xl shadow-lg border border-stone-200 dark:border-stone-800 p-1.5 z-40 animate-in fade-in slide-in-from-bottom-2 duration-150">
               <Link
                 to="/settings"
                 onClick={() => setProfileMenuOpen(false)}
-                className="flex items-center gap-2 px-3 py-2 text-xs font-medium text-stone-700 hover:bg-stone-100 rounded-lg transition"
+                className="flex items-center gap-2 px-3 py-2 text-xs font-medium text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-lg transition"
               >
                 <Settings size={15} className="text-stone-400" />
                 <span>Account settings</span>
@@ -223,10 +227,29 @@ export const Sidebar = ({ isCollapsed = false, onToggleCollapse }) => {
               <button
                 type="button"
                 onClick={() => {
+                  toggleTheme();
+                }}
+                className="w-full flex items-center justify-between px-3 py-2 text-xs font-medium text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-lg transition cursor-pointer"
+              >
+                <div className="flex items-center gap-2">
+                  {isDark ? (
+                    <Sun size={15} className="text-amber-500" />
+                  ) : (
+                    <Moon size={15} className="text-violet-500" />
+                  )}
+                  <span>{isDark ? "Light theme" : "Dark theme"}</span>
+                </div>
+                <span className="text-[10px] px-1.5 py-0.2 rounded font-semibold bg-stone-100 dark:bg-stone-800 text-stone-500 dark:text-stone-400">
+                  {isDark ? "Dark" : "Light"}
+                </span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
                   setProfileMenuOpen(false);
                   setLogoutModalOpen(true);
                 }}
-                className="w-full flex items-center gap-2 px-3 py-2 text-xs font-medium text-rose-600 hover:bg-rose-50 rounded-lg transition cursor-pointer"
+                className="w-full flex items-center gap-2 px-3 py-2 text-xs font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg transition cursor-pointer"
               >
                 <LogOut size={15} />
                 <span>Log out</span>

@@ -29,13 +29,19 @@ export const Button = React.forwardRef(
       primary:
         "bg-violet-600 hover:bg-violet-700 active:bg-violet-800 text-white shadow-xs focus:ring-violet-500",
       secondary:
-        "bg-stone-100 hover:bg-stone-200 active:bg-stone-300 text-stone-800 focus:ring-stone-400 border border-stone-200",
+        "bg-stone-100 dark:bg-stone-800 hover:bg-stone-200 dark:hover:bg-stone-700 active:bg-stone-300 text-stone-800 dark:text-stone-200 focus:ring-stone-400 border border-stone-200 dark:border-stone-700",
       outline:
-        "bg-white hover:bg-stone-50 active:bg-stone-100 text-stone-700 border border-stone-300 shadow-xs focus:ring-stone-400",
+        "bg-white dark:bg-stone-900 hover:bg-stone-50 dark:hover:bg-stone-800 active:bg-stone-100 text-stone-700 dark:text-stone-200 border border-stone-300 dark:border-stone-700 shadow-xs focus:ring-stone-400",
       danger:
         "bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white shadow-xs focus:ring-rose-500",
+      dangerOutline:
+        "bg-rose-50/70 dark:bg-rose-950/30 hover:bg-rose-100 dark:hover:bg-rose-950/60 active:bg-rose-200/80 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-900/60 shadow-xs focus:ring-rose-500",
+      success:
+        "bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white shadow-xs focus:ring-emerald-500",
+      successOutline:
+        "bg-emerald-50/70 dark:bg-emerald-950/30 hover:bg-emerald-100 dark:hover:bg-emerald-950/60 active:bg-emerald-200/80 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-900/60 shadow-xs focus:ring-emerald-500",
       ghost:
-        "bg-transparent hover:bg-stone-100 active:bg-stone-200 text-stone-600 hover:text-stone-900 focus:ring-stone-400",
+        "bg-transparent hover:bg-stone-100 dark:hover:bg-stone-800 active:bg-stone-200 text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100 focus:ring-stone-400",
     };
 
     return (
