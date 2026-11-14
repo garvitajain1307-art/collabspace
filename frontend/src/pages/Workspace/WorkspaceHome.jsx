@@ -189,9 +189,10 @@ export const WorkspaceHome = () => {
       toast.success("Document created");
       setCreateDocModalOpen(false);
       setDocTitle("");
-      loadWorkspaceData();
       if (res.document?._id) {
         navigate(`/collaboration/${res.document._id}`);
+      } else {
+        await loadWorkspaceData();
       }
     } catch (err) {
       toast.error(err.message || "Failed to create document");

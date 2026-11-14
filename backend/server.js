@@ -25,13 +25,17 @@ const httpServer = createServer(app);
 
 const io = new Server(httpServer, {
     cors: {
-        origin: ["http://localhost:5173", "http://localhost:5174", "https://sarcasm-remember-eastbound.ngrok-free.dev"],
+        origin: [
+            "http://localhost:5173",
+            "http://localhost:5174",
+            "https://sarcasm-remember-eastbound.ngrok-free.dev"
+        ],
         methods: ["GET", "POST"],
         credentials: true
     }
 });
 
-// Authenticate socket using the HTTP-only cookie.
+// Socket authentication
 io.use(async (socket, next) => {
     try {
         const cookies = cookie.parse(
@@ -60,25 +64,18 @@ io.use(async (socket, next) => {
         socket.data.userId = user._id.toString();
 
         next();
-
     } catch (error) {
         console.log("Socket authentication failed:", error.message);
         next(new Error("Authentication failed"));
     }
 });
 
-// documentId -> userId -> user details and active socket IDs
-
-// documentId -> Y.Doc
-
 const documentUsers = new Map();
 const documentYDocs = new Map();
 const documentUpdateQueues = new Map();
 
-
-// Check workspace membership and document-specific permission.
+// Get authorized document
 const getAuthorizedDocument = async (user, documentId) => {
-
     if (!mongoose.isValidObjectId(documentId)) {
         return null;
     }
@@ -107,10 +104,20 @@ const getAuthorizedDocument = async (user, documentId) => {
     return { document, workspace, access };
 };
 
+// Get current online users
+const getOnlineUsers = (documentId) => {
+    const users = documentUsers.get(documentId);
 
-// Add a user to the online users list.
+    return users
+        ? Array.from(users.values()).map(user => ({
+            userId: user.userId,
+            name: user.name
+        }))
+        : [];
+};
+
+// Add document user
 const addDocumentUser = (documentId, socket) => {
-
     if (!documentUsers.has(documentId)) {
         documentUsers.set(documentId, new Map());
     }
@@ -134,33 +141,23 @@ const addDocumentUser = (documentId, socket) => {
 
     return {
         isNewUser,
-        onlineUsers: Array.from(users.values()).map(user => ({
-            userId: user.userId,
-            name: user.name
-        }))
+        onlineUsers: getOnlineUsers(documentId)
     };
 };
 
-
-// Remove a socket from a document's online users list.
+// Remove document user
 const removeDocumentUser = (documentId, socket) => {
-
     const users = documentUsers.get(documentId);
 
-    if (!users) {
-        return;
-    }
+    if (!users) return;
 
     const userId = socket.user._id.toString();
     const user = users.get(userId);
 
-    if (!user) {
-        return;
-    }
+    if (!user) return;
 
     user.sockets.delete(socket.id);
 
-    // Only mark the user offline when their last tab disconnects.
     if (user.sockets.size === 0) {
         users.delete(userId);
 
@@ -170,20 +167,18 @@ const removeDocumentUser = (documentId, socket) => {
         });
     }
 
-    const onlineUsers = Array.from(users.values()).map(user => ({
-        userId: user.userId,
-        name: user.name
-    }));
-
-    socket.to(documentId).emit("onlineUsers", onlineUsers);
+    socket.to(documentId).emit(
+        "onlineUsers",
+        getOnlineUsers(documentId)
+    );
 
     if (users.size === 0) {
         documentUsers.delete(documentId);
     }
-}
+};
 
+// Remove presence for a disconnected/revoked socket
 const removePresenceBySocket = (documentId, userId, socketId) => {
-
     const users = documentUsers.get(documentId);
 
     if (!users) return;
@@ -195,7 +190,6 @@ const removePresenceBySocket = (documentId, userId, socketId) => {
     user.sockets.delete(socketId);
 
     if (user.sockets.size === 0) {
-
         users.delete(userId);
 
         io.to(documentId).emit("userLeft", {
@@ -204,60 +198,53 @@ const removePresenceBySocket = (documentId, userId, socketId) => {
         });
     }
 
-    const onlineUsers = Array.from(users.values()).map(user => ({
-        userId: user.userId,
-        name: user.name
-    }));
-
-    io.to(documentId).emit("onlineUsers", onlineUsers);
+    io.to(documentId).emit(
+        "onlineUsers",
+        getOnlineUsers(documentId)
+    );
 
     if (users.size === 0) {
         documentUsers.delete(documentId);
     }
 };
 
+// Check recipient permissions before broadcasting
 const broadcastToAuthorizedUsers = async (
     documentId,
     event,
     data,
     senderSocketId
 ) => {
-
     const sockets = await io.in(documentId).fetchSockets();
 
     for (const recipient of sockets) {
-
-        if (recipient.id === senderSocketId) {
-            continue;
-        }
+        if (recipient.id === senderSocketId) continue;
 
         const userId = recipient.data.userId;
-
         const user = await User.findById(userId);
 
         if (!user) {
-
             recipient.emit("accessRevoked", {
                 message: "Your document access is no longer available"
             });
 
             await recipient.leave(documentId);
-
             removePresenceBySocket(documentId, userId, recipient.id);
 
             continue;
         }
 
-        const authorized = await getAuthorizedDocument(user, documentId);
+        const authorized = await getAuthorizedDocument(
+            user,
+            documentId
+        );
 
         if (!authorized) {
-
             recipient.emit("accessRevoked", {
                 message: "Your document access is no longer available"
             });
 
             await recipient.leave(documentId);
-
             removePresenceBySocket(documentId, userId, recipient.id);
 
             continue;
@@ -267,18 +254,16 @@ const broadcastToAuthorizedUsers = async (
     }
 };
 
-
-
-
-// Load the Yjs document from MongoDB if it is not already in memory.
+// Load Yjs document from MongoDB
 const getYDocument = (documentId, document) => {
-
     if (!documentYDocs.has(documentId)) {
-
         const ydoc = new Y.Doc();
 
         if (document.content?.update) {
-            const savedUpdate = new Uint8Array(document.content.update);
+            const savedUpdate = new Uint8Array(
+                document.content.update
+            );
+
             Y.applyUpdate(ydoc, savedUpdate);
         }
 
@@ -288,19 +273,16 @@ const getYDocument = (documentId, document) => {
     return documentYDocs.get(documentId);
 };
 
-
-// Handle socket connections.
+// Socket connections
 io.on("connection", (socket) => {
-
     console.log("User connected:", socket.id);
 
     socket.documentId = null;
 
-
-    // Join a document.
-    socket.on("joinDocument", async (documentId) => {
-
+    // Join document
+    socket.on("joinDocument", async (requestedDocumentId) => {
         try {
+            const documentId = String(requestedDocumentId || "");
 
             console.log(
                 `${socket.user._id} wants to join document: ${documentId}`
@@ -312,72 +294,68 @@ io.on("connection", (socket) => {
             );
 
             if (!authorized) {
-                return socket.emit(
+                socket.emit(
                     "joinError",
                     "You don't have access to this document"
                 );
-            }
-
-            // Do not join the same room twice.
-            if (socket.documentId === documentId) {
-
-                socket.emit(
-                    "joinedDocument",
-                    `Successfully joined document ${documentId}`
-                );
-
-                const users = documentUsers.get(documentId);
-
-                socket.emit(
-                    "onlineUsers",
-                    users
-                        ? Array.from(users.values()).map(user => ({
-                            userId: user.userId,
-                            name: user.name
-                        }))
-                        : []
-                );
 
                 return;
-            }
-
-            // Leave the previous document before joining another.
-            if (socket.documentId) {
-
-                const previousDocumentId = socket.documentId;
-
-                socket.leave(previousDocumentId);
-
-                removeDocumentUser(previousDocumentId, socket);
-
-                socket.documentId = null;
             }
 
             const document = authorized.document;
             const access = authorized.access;
 
             const ydoc = getYDocument(documentId, document);
-
             const state = Y.encodeStateAsUpdate(ydoc);
+
+            // Already in this document: send initial state again.
+            if (socket.documentId === documentId) {
+                socket.emit("yjsSync", {
+                    documentId,
+                    update: Array.from(state),
+                    access
+                });
+
+                socket.emit(
+                    "onlineUsers",
+                    getOnlineUsers(documentId)
+                );
+
+                socket.emit(
+                    "joinedDocument",
+                    `Successfully joined document ${documentId}`
+                );
+
+                return;
+            }
+
+            // Leave previous document
+            if (socket.documentId) {
+                const previousDocumentId = socket.documentId;
+
+                socket.leave(previousDocumentId);
+                removeDocumentUser(previousDocumentId, socket);
+
+                socket.documentId = null;
+            }
 
             await socket.join(documentId);
 
             socket.documentId = documentId;
 
-            // Send the current Yjs state and permission.
+            // Send initial Yjs state
             socket.emit("yjsSync", {
+                documentId,
                 update: Array.from(state),
                 access
             });
 
-            // Update online users.
+            // Update presence
             const presence = addDocumentUser(documentId, socket);
 
             socket.emit("onlineUsers", presence.onlineUsers);
 
-            // Notify others only when this user joins for the first time.
             if (presence.isNewUser) {
-
                 socket.to(documentId).emit("userJoined", {
                     userId: socket.user._id,
                     name: socket.user.name
@@ -394,30 +372,29 @@ io.on("connection", (socket) => {
             );
 
         } catch (error) {
-
             console.log("Join document error:", error.message);
 
-            socket.emit("joinError", "Unable to join document");
+            socket.emit(
+                "joinError",
+                "Unable to join document"
+            );
         }
     });
 
-
-    // Leave the current document.
+    // Leave document
     socket.on("leaveDocument", (documentId) => {
+        if (!socket.documentId) return;
 
-        if (!socket.documentId) {
-            return;
-        }
-
-        // A socket can only leave its own current document.
-        if (documentId && documentId !== socket.documentId) {
+        if (
+            documentId &&
+            String(documentId) !== String(socket.documentId)
+        ) {
             return;
         }
 
         const currentDocumentId = socket.documentId;
 
         socket.leave(currentDocumentId);
-
         removeDocumentUser(currentDocumentId, socket);
 
         socket.documentId = null;
@@ -427,162 +404,142 @@ io.on("connection", (socket) => {
         );
     });
 
-
-    // Receive Yjs updates.
-   
-socket.on("yjsUpdate", async (data) => {
-
-    const documentId = socket.documentId;
-
-    if (!documentId || !Array.isArray(data?.update)) {
-        return;
-    }
-
-    // Queue updates so saves happen in order.
-    const previousUpdate =
-        documentUpdateQueues.get(documentId) || Promise.resolve();
-
-    const currentUpdate = previousUpdate.catch(() => {}).then(async () => {
-
-        // Recheck the sender's permission before processing.
-        const authorized = await getAuthorizedDocument(
-            socket.user,
-            documentId
-        );
-
-        if (!authorized) {
-
-            socket.emit("accessRevoked", {
-                message: "Your document access is no longer available"
-            });
-
-            socket.leave(documentId);
-            removeDocumentUser(documentId, socket);
-            socket.documentId = null;
-
-            return;
-        }
-
-        if (
-            authorized.access !== "owner" &&
-            authorized.access !== "editor"
-        ) {
-            console.log("Update rejected: User is VIEWER");
-            return;
-        }
-
-        const ydoc = documentYDocs.get(documentId);
-
-        if (!ydoc) {
-            return;
-        }
-
-        // Apply update to the in-memory Y.Doc.
-        const update = new Uint8Array(data.update);
-
-        Y.applyUpdate(ydoc, update);
-
-        // Persist the complete state.
-        const state = Y.encodeStateAsUpdate(ydoc);
-
-        authorized.document.content = {
-            update: Array.from(state)
-        };
-
-        await authorized.document.save();
-
-        console.log("DOCUMENT SAVED TO MONGODB");
-
-        // Check each recipient's permission before broadcasting.
-        await broadcastToAuthorizedUsers(
-            documentId,
-            "yjsUpdate",
-            { update: data.update },
-            socket.id
-        );
-    });
-
-    documentUpdateQueues.set(documentId, currentUpdate);
-
-    try {
-
-        await currentUpdate;
-
-    } catch (error) {
-
-        console.log("YJS UPDATE ERROR:", error.message);
-
-    } finally {
-
-        if (documentUpdateQueues.get(documentId) === currentUpdate) {
-            documentUpdateQueues.delete(documentId);
-        }
-    }
-});
-
-
-
-    // Awareness updates.
-    
-socket.on("awarenessUpdate", async (data) => {
-
-    try {
-
+    // Receive Yjs updates
+    socket.on("yjsUpdate", async (data) => {
         const documentId = socket.documentId;
 
         if (!documentId || !Array.isArray(data?.update)) {
             return;
         }
 
-        const authorized = await getAuthorizedDocument(
-            socket.user,
-            documentId
-        );
+        const previousUpdate =
+            documentUpdateQueues.get(documentId) || Promise.resolve();
 
-        if (!authorized) {
+        const currentUpdate = previousUpdate
+            .catch(() => {})
+            .then(async () => {
+                const authorized = await getAuthorizedDocument(
+                    socket.user,
+                    documentId
+                );
 
-            socket.emit("accessRevoked", {
-                message: "Your document access is no longer available"
+                if (!authorized) {
+                    socket.emit("accessRevoked", {
+                        message: "Your document access is no longer available"
+                    });
+
+                    socket.leave(documentId);
+                    removeDocumentUser(documentId, socket);
+                    socket.documentId = null;
+
+                    return;
+                }
+
+                if (
+                    authorized.access !== "owner" &&
+                    authorized.access !== "editor"
+                ) {
+                    console.log("Update rejected: User is VIEWER");
+                    return;
+                }
+
+                const ydoc = documentYDocs.get(documentId);
+
+                if (!ydoc) return;
+
+                const update = new Uint8Array(data.update);
+
+                Y.applyUpdate(ydoc, update);
+
+                const state = Y.encodeStateAsUpdate(ydoc);
+
+                authorized.document.content = {
+                    update: Array.from(state)
+                };
+
+                await authorized.document.save();
+
+                console.log("DOCUMENT SAVED TO MONGODB");
+
+                await broadcastToAuthorizedUsers(
+                    documentId,
+                    "yjsUpdate",
+                    {
+                        documentId,
+                        update: data.update
+                    },
+                    socket.id
+                );
             });
 
-            socket.leave(documentId);
-            removeDocumentUser(documentId, socket);
-            socket.documentId = null;
+        documentUpdateQueues.set(documentId, currentUpdate);
 
-            return;
-        }
-
-        await broadcastToAuthorizedUsers(
-            documentId,
-            "awarenessUpdate",
-            { update: data.update },
-            socket.id
-        );
-
-    } catch (error) {
-
-        console.log("AWARENESS UPDATE ERROR:", error.message);
-    }
-});
-
-
-    // Disconnect cleanup.
-    socket.on("disconnect", () => {
-
-        console.log("User disconnected:", socket.id);
-
-        if (socket.documentId) {
-
-            const documentId = socket.documentId;
-
-            removeDocumentUser(documentId, socket);
-
-            socket.documentId = null;
+        try {
+            await currentUpdate;
+        } catch (error) {
+            console.log("YJS UPDATE ERROR:", error.message);
+        } finally {
+            if (
+                documentUpdateQueues.get(documentId) === currentUpdate
+            ) {
+                documentUpdateQueues.delete(documentId);
+            }
         }
     });
 
-});
+    // Awareness updates
+    socket.on("awarenessUpdate", async (data) => {
+        try {
+            const documentId = socket.documentId;
 
+            if (!documentId || !Array.isArray(data?.update)) {
+                return;
+            }
+
+            const authorized = await getAuthorizedDocument(
+                socket.user,
+                documentId
+            );
+
+            if (!authorized) {
+                socket.emit("accessRevoked", {
+                    message: "Your document access is no longer available"
+                });
+
+                socket.leave(documentId);
+                removeDocumentUser(documentId, socket);
+                socket.documentId = null;
+
+                return;
+            }
+
+            await broadcastToAuthorizedUsers(
+                documentId,
+                "awarenessUpdate",
+                {
+                    documentId,
+                    update: data.update
+                },
+                socket.id
+            );
+
+        } catch (error) {
+            console.log("AWARENESS UPDATE ERROR:", error.message);
+        }
+    });
+
+    // Disconnect cleanup
+    socket.on("disconnect", () => {
+        console.log("User disconnected:", socket.id);
+
+        if (socket.documentId) {
+            const documentId = socket.documentId;
+
+            removeDocumentUser(documentId, socket);
+            socket.documentId = null;
+        }
+    });
+});
 
 httpServer.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);

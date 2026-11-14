@@ -35,6 +35,8 @@ export const CollaborationPage = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const toast = useToast();
+const toastRef = useRef(toast);
+toastRef.current = toast;
 
   const { user } = useSelector((state) => state.auth);
   const { selectedDocument } = useSelector((state) => state.document);
@@ -84,12 +86,12 @@ export const CollaborationPage = () => {
       dispatch(setComments(cmtRes?.comments || []));
       dispatch(setCollaborators(colRes?.collaborators || []));
     } catch (err) {
-      toast.error(err.message || "Failed to open document");
+      toastRef.current.error(err.message || "Failed to open document");
       navigate("/dashboard");
     } finally {
       setLoading(false);
     }
-  }, [documentId, dispatch, navigate, toast]);
+  }, [documentId, dispatch, navigate]);
 
   useEffect(() => {
     setLoading(true);
@@ -231,7 +233,10 @@ export const CollaborationPage = () => {
           {/* Right: Presence Avatars, Collaborators, Comments Toggle */}
           <div className="flex items-center gap-2.5">
             {/* Live Online Users Cluster */}
-            <div className="flex items-center -space-x-1.5 mr-1" title="Online collaborators">
+            <div
+              className="flex items-center -space-x-1.5 mr-1"
+              title="Online collaborators"
+            >
               {onlineUsers.map((u, idx) => (
                 <Avatar
                   key={idx}
@@ -249,18 +254,20 @@ export const CollaborationPage = () => {
               {docAccess === "owner"
                 ? "Owner"
                 : docAccess === "editor"
-                ? "Editor"
-                : "Viewer"}
+                  ? "Editor"
+                  : "Viewer"}
             </Badge>
 
             {/* Manage Collaborators button */}
             <Button
-              variant={activeSidePanel === "collaborators" ? "primary" : "outline"}
+              variant={
+                activeSidePanel === "collaborators" ? "primary" : "outline"
+              }
               size="sm"
               icon={Share2}
               onClick={() =>
                 setActiveSidePanel(
-                  activeSidePanel === "collaborators" ? null : "collaborators"
+                  activeSidePanel === "collaborators" ? null : "collaborators",
                 )
               }
             >
@@ -274,7 +281,7 @@ export const CollaborationPage = () => {
               icon={MessageSquare}
               onClick={() =>
                 setActiveSidePanel(
-                  activeSidePanel === "comments" ? null : "comments"
+                  activeSidePanel === "comments" ? null : "comments",
                 )
               }
             >
@@ -309,13 +316,13 @@ export const CollaborationPage = () => {
         {/* 4. Real-time Editor Area */}
         <div className="flex-1 flex overflow-hidden">
           <CollaborativeEditor
+            key={documentId}
             documentId={documentId}
             user={user}
-            onAccessChange={(newAccess) => setDocAccess(newAccess)}
-            onOnlineUsersChange={(users) => setOnlineUsers(users)}
-            onSaveStatusChange={(status) => setSaveStatus(status)}
-            onTextSelectionChange={(range) => setSelectedTextRange(range)}
-            readOnly={!canEdit}
+            onAccessChange={setDocAccess}
+            onOnlineUsersChange={setOnlineUsers}
+            onSaveStatusChange={setSaveStatus}
+            onTextSelectionChange={setSelectedTextRange}
           />
 
           {/* Right-Side Dock: Comments Panel */}
