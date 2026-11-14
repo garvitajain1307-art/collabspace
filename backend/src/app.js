@@ -18,7 +18,7 @@ const app=express();
 
 //middleware ko app.use() ke andr likhte hai
 app.use(cors({
-    origin: ["http://localhost:5173", "http://localhost:5174"],
+    origin: ["http://localhost:5173", "http://localhost:5174","https://sarcasm-remember-eastbound.ngrok-free.dev"],
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     credentials: true
 }));

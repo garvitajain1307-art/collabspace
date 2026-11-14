@@ -25,7 +25,7 @@ const httpServer = createServer(app);
 
 const io = new Server(httpServer, {
     cors: {
-        origin: ["http://localhost:5173", "http://localhost:5174"],
+        origin: ["http://localhost:5173", "http://localhost:5174", "https://sarcasm-remember-eastbound.ngrok-free.dev"],
         methods: ["GET", "POST"],
         credentials: true
     }
